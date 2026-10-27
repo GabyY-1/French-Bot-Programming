@@ -148,7 +148,7 @@ export class FbpCompiler {
       "latence": String(Math.max(0, Math.round(interaction.client.ws.ping))) + " ms",
       "avatar": selectedUser?.displayAvatarURL({ size: 256 }) ?? interaction.user.displayAvatarURL({ size: 256 })
     };
-    const optionMatch = source.trim().match(/^(?:option|option)\.([a-z0-9_-]{1,32})$/);
+    const optionMatch = source.trim().match(/^option\.([a-z0-9_-]{1,32})$/);
     if (optionMatch) return optionValues.get(optionMatch[1]) ?? "Option indisponible : " + optionMatch[1];
     return source.trim() in values ? values[source.trim()] : "Source inconnue : " + source.trim();
   }
