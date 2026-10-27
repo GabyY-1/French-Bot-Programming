@@ -246,6 +246,8 @@ export class FbpCompiler {
                 }),
                 entier: () => builder.addIntegerOption(item => {
                   item.setName(option.name).setDescription(option.description).setRequired(option.required);
+                  if (option.minValue !== undefined) item.setMinValue(option.minValue);
+                  if (option.maxValue !== undefined) item.setMaxValue(option.maxValue);
                   for (const choice of option.choices ?? []) if (typeof choice.value === "number") item.addChoices({ name: choice.name, value: choice.value });
                   return item;
                 }),
