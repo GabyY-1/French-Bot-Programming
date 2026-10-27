@@ -23,7 +23,7 @@ Puis, dans le `package.json` de ton projet :
     "start": "fbp run lancer"
   },
   "dependencies": {
-    "fbp-language": "^0.2.0"
+    "fbp-language": "^1.0.0"
   }
 }
 ```
