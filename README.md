@@ -1,5 +1,7 @@
 # FBP — French Bot Programming
 
+![Logo FBP](https://raw.githubusercontent.com/GabyY-1/French-Bot-Programming/main/assets/fbp-logo.svg)
+
 FBP est un langage interprété par Node.js. Les fichiers source utilisent l'extension `.fbp`. Le paquet fournit le moteur et la commande `fbp`.
 
 ## Prérequis
@@ -233,3 +235,8 @@ discordOptionNombreLimites("note", "note", 0, 20)
 - `discordOptionNombreLimites(commande, option, minimum, maximum)` accepte des bornes numériques, y compris décimales.
 - Le minimum doit être inférieur ou égal au maximum.
 - Les limites s'appliquent à l'interface Discord. Une option avec des choix prédéfinis ne peut pas recevoir de limites.
+
+
+## Coloration syntaxique VS Code
+
+Le dépôt contient la grammaire TextMate et la configuration du langage FBP. Le paquet déclare les fichiers `.fbp`, leur coloration syntaxique et les paires de caractères dans `package.json`. Le logo est disponible dans `assets/fbp-logo.svg`.
