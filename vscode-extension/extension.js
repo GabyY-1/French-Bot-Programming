@@ -75,7 +75,7 @@ function validateDocument(document, collection) {
   const functionNames = new Set();
   const declaredFunctions = new Set();
   for (const raw of lines) {
-    const match = raw.trim().match(/^([\\p{L}_][\\p{L}\\p{N}_]*)\\s*\\(\\s*\\)\\s*\\{$/u);
+    const match = raw.trim().match(/^([\p{L}_][\p{L}\p{N}_]*)\s*\(\s*\)\s*\{$/u);
     if (match) functionNames.add(match[1]);
   }
   const builtInNames = new Set(builtins.map(([name]) => name));
