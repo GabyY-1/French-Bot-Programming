@@ -25,7 +25,7 @@ Puis, dans le `package.json` de ton projet :
     "start": "fbp run lancer"
   },
   "dependencies": {
-    "fbp-language": "^1.2.0"
+    "fbp-language": "^1.2.1"
   }
 }
 ```
@@ -84,6 +84,17 @@ fbp run-file scripts/main.fbp
 - `fbp run <nom>` exécute la commande correspondante dans le fichier `commandes.fbp` du dossier courant.
 - `fbp run-file <fichier>` exécute directement un fichier FBP.
 - `fbp ping` vérifie que le CLI répond ; il ne se connecte pas à Discord.
+
+## Réponses privées Discord (v1.2.1)
+
+Pour envoyer une réponse slash visible uniquement par la personne qui utilise la commande, utilise `discordCommandePrivee` :
+
+```fbp
+discordConnexion()
+discordCommandePrivee("profil", "Ces informations sont visibles uniquement par toi.")
+```
+
+La fonction prend le nom de la commande puis le texte de réponse. La commande reste une commande slash Discord classique, mais sa réponse est éphémère et n’est visible que par l’utilisateur qui l’a déclenchée.
 
 ## Syntaxe actuelle
 
