@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { FbpCompiler } from "./compiler";
 import { FbpError } from "./errors";
 
-const VERSION = "1.1.8";
+const VERSION = "1.1.9";
 
 function help(): void {
   console.log(`FBP — French Bot Programming
@@ -14,6 +15,8 @@ Utilisation :
   fbp version              Affiche la version de FBP
   fbp info                 Affiche les informations du moteur
   fbp ping                 Vérifie que le CLI répond
+  fbp -init                Prépare un projet FBP et le support VS Code
+  fbp init                 Alias de -init
   fbp run <commande>       Exécute une commande de commandes.fbp
   fbp run-file <fichier>   Exécute directement un fichier .fbp`);
 }
@@ -23,6 +26,62 @@ function ping(): void {
   console.log(`Version : ${VERSION}`);
   console.log(`Node.js : ${process.version}`);
   console.log("Bot : aucune connexion externe n'est configurée par le CLI seul.");
+}
+
+function initProject(): void {
+  const root = process.cwd();
+  const commandsPath = path.join(root, "commandes.fbp");
+  const mainDir = path.join(root, "scripts");
+  const mainPath = path.join(mainDir, "main.fbp");
+
+  fs.mkdirSync(mainDir, { recursive: true });
+  if (!fs.existsSync(commandsPath)) {
+    fs.writeFileSync(commandsPath, JSON.stringify({ lancer: "scripts/main.fbp" }, null, 2) + "\n", "utf8");
+    console.log("Créé : commandes.fbp");
+  } else {
+    console.log("Conservé : commandes.fbp existe déjà.");
+  }
+
+  if (!fs.existsSync(mainPath)) {
+    fs.writeFileSync(mainPath, 'nom = "Mon projet"\n\nlance() {\n  affiche("FBP fonctionne !")\n  affiche("Projet :", nom)\n}\n\nlance()\n', "utf8");
+    console.log("Créé : scripts/main.fbp");
+  } else {
+    console.log("Conservé : scripts/main.fbp existe déjà.");
+  }
+
+  installVscodeSupport();
+  console.log("\nProjet FBP initialisé. Lance « fbp run lancer » pour exécuter le programme.");
+}
+
+function installVscodeSupport(): void {
+  const bundledExtension = path.resolve(__dirname, "../vscode-extension");
+  const manifestPath = path.join(bundledExtension, "package.json");
+  if (!fs.existsSync(manifestPath)) {
+    console.log("Support VS Code non trouvé dans le package. La coloration et l'icône n'ont pas été installées.");
+    return;
+  }
+
+  const extensionRoot = process.env.VSCODE_AGENT_FOLDER
+    ? path.join(process.env.VSCODE_AGENT_FOLDER, "extensions")
+    : process.platform === "win32"
+      ? path.join(process.env.USERPROFILE || os.homedir(), ".vscode", "extensions")
+      : path.join(os.homedir(), ".vscode", "extensions");
+  const destination = path.join(extensionRoot, `gabyy1.fbp-language-${VERSION}`);
+
+  try {
+    fs.mkdirSync(extensionRoot, { recursive: true });
+    if (fs.existsSync(destination)) {
+      fs.rmSync(destination, { recursive: true, force: true });
+    }
+    fs.cpSync(bundledExtension, destination, { recursive: true });
+    console.log(`Support VS Code installé dans : ${destination}`);
+    console.log("Recharge la fenêtre VS Code pour activer la coloration FBP.");
+    console.log("Pour afficher l'icône personnalisée, sélectionne « FBP File Icons » dans le thème d'icônes de fichiers.");
+  } catch (error) {
+    console.log("Installation automatique du support VS Code impossible.");
+    console.log("Vérifie les permissions du dossier des extensions VS Code.");
+    if (error instanceof Error) console.log(error.message);
+  }
 }
 
 function runCommand(name: string): void {
@@ -73,6 +132,10 @@ function main(): void {
         break;
       case "ping":
         ping();
+        break;
+      case "-init":
+      case "init":
+        initProject();
         break;
       case "run":
         if (!args[0]) throw new FbpError("Indique le nom de la commande. Exemple : fbp run lancer");
