@@ -23,7 +23,7 @@ Puis, dans le `package.json` de ton projet :
     "start": "fbp run lancer"
   },
   "dependencies": {
-    "fbp-language": "^1.1.4"
+    "fbp-language": "^1.1.5"
   }
 }
 ```
@@ -129,7 +129,7 @@ npm test
 Les fichiers d'essai internes se trouvent dans `tests/fixtures`. Ils ne font pas partie du paquet publié.
 
 
-## Informations Discord dynamiques (v1.1.4)
+## Informations Discord dynamiques (v1.1.5)
 
 Les champs d'un embed peuvent récupérer les informations accessibles au moment où la commande est utilisée. Exemple :
 
@@ -149,3 +149,29 @@ discordChampDynamique("serveur-info", "Avatar", "discordAvatar")
 ```
 
 Sources disponibles : `discordServeur.nom`, `discordServeur.id`, `discordServeur.creation`, `discordMembres.nombre`, `discordProfil.nom`, `discordProfil.id`, `discordProfil.avatar`, `discordRoles.nombre`, `discordSalons.nombre`, `discordStatistiques.membres`, `discordStatistiques.roles`, `discordStatistiques.salons`, `discordLatence` et `discordAvatar`. `discordOptionUtilisateur(nomCommande, nomOption, description)` ajoute un sélecteur facultatif de membre à une commande embed. Les données accessibles dépendent des permissions et du cache Discord du bot.
+
+
+## Options des commandes slash (v1.1.5)
+
+Les commandes slash peuvent maintenant recevoir des options texte, nombre, entier ou booléen. Le dernier argument indique si l'option est obligatoire ; il est facultatif et vaut `false` par défaut.
+
+```fbp
+discordConnexion()
+discordCommande("bonjour", "Salut {{prenom}} !")
+discordOptionTexte("bonjour", "prenom", "Ton prénom", true)
+discordOptionEntier("bonjour", "age", "Ton âge")
+discordOptionNombre("bonjour", "note", "Une valeur décimale")
+discordOptionBooleen("bonjour", "confirme", "Confirmer ?")
+```
+
+Dans une réponse texte, `{{prenom}}` est remplacé par la valeur saisie. Pour les embeds, les champs dynamiques peuvent lire une option avec `discordChampDynamique("commande", "Champ", "option.prenom")` (ou `discordOption.prenom`). Les options absentes ne sont pas remplacées et une option obligatoire inaccessible produit une réponse d'erreur.
+
+Fonctions disponibles :
+
+- `discordOptionTexte(commande, nom, description, obligatoire)`
+- `discordOptionNombre(commande, nom, description, obligatoire)`
+- `discordOptionEntier(commande, nom, description, obligatoire)`
+- `discordOptionBooleen(commande, nom, description, obligatoire)`
+- `discordOptionUtilisateur(commande, nom, description)` pour le sélecteur de membre existant des commandes embed.
+
+Les noms d'options doivent respecter les règles Discord (minuscules, chiffres, tirets et underscores, 1 à 32 caractères). Une commande peut avoir jusqu'à 25 options. Les types d'options sont déclarés lors de l'enregistrement des commandes ; redémarre le bot après avoir modifié leur définition. Le bot a besoin du scope `applications.commands` et de l'accès au serveur concerné. Aucun intent privilégié supplémentaire n'est requis pour ces options.
