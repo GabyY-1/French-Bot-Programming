@@ -223,6 +223,7 @@ export class FbpCompiler {
               .setColor(Number.parseInt(response.color.slice(1), 16));
             if (response.fields.length) embed.addFields(response.fields.map(field => ({ name: field.name, value: field.value, inline: false })));
             await interaction.reply({ embeds: [embed] });
+          }
         } catch (error: unknown) {
           this.output("Erreur Discord : " + (error instanceof Error ? error.message : String(error)));
         }
