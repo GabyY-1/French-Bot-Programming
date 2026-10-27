@@ -5,7 +5,7 @@ import path from "node:path";
 import { FbpCompiler } from "./compiler";
 import { FbpError } from "./errors";
 
-const VERSION = "1.1.9";
+const VERSION = "1.2.0";
 
 function help(): void {
   console.log(`FBP — French Bot Programming
@@ -18,7 +18,7 @@ Utilisation :
   fbp -init                Prépare un projet FBP et le support VS Code
   fbp init                 Alias de -init
   fbp run <commande>       Exécute une commande de commandes.fbp
-  fbp run-file <fichier>   Exécute directement un fichier .fbp`);
+  fbp run-file <fichier>   Exécute directement un fichier .fbp\n\nDans VS Code, FBP 1.2.0 propose l’autocomplétion et signale les erreurs de syntaxe.`);
 }
 
 function ping(): void {
