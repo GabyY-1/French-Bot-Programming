@@ -1,0 +1,49 @@
+{
+  "scopeName": "source.fbp",
+  "name": "FBP",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#strings" },
+    { "include": "#numbers" },
+    { "include": "#keywords" },
+    { "include": "#booleans" },
+    { "include": "#function-declarations" },
+    { "include": "#function-calls" },
+    { "include": "#assignments" },
+    { "include": "#operators" },
+    { "include": "#punctuation" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        { "name": "comment.line.double-slash.fbp", "match": "//.*$" },
+        { "name": "comment.line.number-sign.fbp", "match": "#.*$" }
+      ]
+    },
+    "strings": {
+      "name": "string.quoted.double.fbp",
+      "begin": "\"",
+      "beginCaptures": { "0": { "name": "punctuation.definition.string.begin.fbp" } },
+      "end": "\"",
+      "endCaptures": { "0": { "name": "punctuation.definition.string.end.fbp" } },
+      "patterns": [{ "name": "constant.character.escape.fbp", "match": "\\\\." }]
+    },
+    "numbers": { "name": "constant.numeric.fbp", "match": "\\b\\d+(?:\\.\\d+)?\\b" },
+    "keywords": { "name": "keyword.control.fbp", "match": "\\b(?:import|de)\\b" },
+    "booleans": { "name": "constant.language.boolean.fbp", "match": "\\b(?:true|false)\\b" },
+    "function-declarations": {
+      "match": "\\b([\\p{L}_][\\p{L}\\p{N}_]*)\\s*(?=\\(\\s*\\)\\s*\\{)",
+      "captures": { "1": { "name": "entity.name.function.fbp" } }
+    },
+    "function-calls": {
+      "match": "\\b([\\p{L}_][\\p{L}\\p{N}_]*)\\s*(?=\\()",
+      "captures": { "1": { "name": "support.function.fbp" } }
+    },
+    "assignments": {
+      "match": "\\b([\\p{L}_][\\p{L}\\p{N}_]*)\\s*(?==)",
+      "captures": { "1": { "name": "variable.other.assignment.fbp" } }
+    },
+    "operators": { "name": "keyword.operator.fbp", "match": "(?:=|\\+|\\-|\\*|/|==|!=|<=|>=)" },
+    "punctuation": { "name": "punctuation.section.fbp", "match": "[{}()\\[\\],.]" }
+  }
+}
