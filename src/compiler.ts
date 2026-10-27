@@ -190,9 +190,16 @@ export class FbpCompiler {
               .setDescription(`Commande ${commandName} du bot FBP`)
               .toJSON()
           );
-          await client.application?.commands.set(commands);
+          const manager = client.application?.commands;
+          if (!manager) throw new Error("L'application Discord n'est pas disponible.");
+          const existing = await manager.fetch();
+          for (const command of commands) {
+            const registered = existing.find(item => item.name === command.name);
+            if (registered) await manager.edit(registered.id, command);
+            else await manager.create(command);
+          }
           this.output("Connecté à Discord en tant que " + (client.user?.tag ?? "bot") + ".");
-          this.output("Commandes slash enregistrées : " + commands.length + ".");
+          this.output("Commandes slash FBP enregistrées : " + commands.length + ".");
         } catch (error: unknown) {
           this.output("Enregistrement des commandes slash impossible : " + (error instanceof Error ? error.message : String(error)));
         }
