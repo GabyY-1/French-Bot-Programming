@@ -18,7 +18,7 @@ function runSource(source) {
 
 test("un choix ne peut pas viser une commande inexistante", () => {
   assert.throws(
-    () => runSource('discordChoixTexte("inconnue", "couleur", "Bleu", "bleu")'),
+    () => runSource('choixTexte("inconnue", "couleur", "Bleu", "bleu")'),
     /n'est pas déclarée/
   );
 });
@@ -26,10 +26,10 @@ test("un choix ne peut pas viser une commande inexistante", () => {
 test("un choix entier refuse une valeur décimale", () => {
   assert.throws(
     () => runSource([
-      'discordConnexion()',
-      'discordCommande("niveau", "Niveau")',
-      'discordOptionEntier("niveau", "valeur", "Choisis un niveau")',
-      'discordChoixEntier("niveau", "valeur", "Moyen", 1.5)'
+      'connexion()',
+      'commande("niveau", "Niveau")',
+      'optionEntier("niveau", "valeur", "Choisis un niveau")',
+      'choixEntier("niveau", "valeur", "Moyen", 1.5)'
     ].join("\n")),
     /Token Discord manquant|nombre entier/
   );
