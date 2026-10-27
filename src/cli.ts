@@ -4,7 +4,7 @@ import path from "node:path";
 import { FbpCompiler } from "./compiler";
 import { FbpError } from "./errors";
 
-const VERSION = "1.1.3";
+const VERSION = "1.1.4";
 
 function help(): void {
   console.log(`FBP — French Bot Programming
