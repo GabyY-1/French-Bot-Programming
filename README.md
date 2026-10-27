@@ -23,7 +23,7 @@ Puis, dans le `package.json` de ton projet :
     "start": "fbp run lancer"
   },
   "dependencies": {
-    "fbp-language": "^1.1.5"
+    "fbp-language": "^1.1.6"
   }
 }
 ```
@@ -129,7 +129,7 @@ npm test
 Les fichiers d'essai internes se trouvent dans `tests/fixtures`. Ils ne font pas partie du paquet publié.
 
 
-## Informations Discord dynamiques (v1.1.5)
+## Informations Discord dynamiques (v1.1.6)
 
 Les champs d'un embed peuvent récupérer les informations accessibles au moment où la commande est utilisée. Exemple :
 
@@ -151,7 +151,7 @@ discordChampDynamique("serveur-info", "Avatar", "discordAvatar")
 Sources disponibles : `discordServeur.nom`, `discordServeur.id`, `discordServeur.creation`, `discordMembres.nombre`, `discordProfil.nom`, `discordProfil.id`, `discordProfil.avatar`, `discordRoles.nombre`, `discordSalons.nombre`, `discordStatistiques.membres`, `discordStatistiques.roles`, `discordStatistiques.salons`, `discordLatence` et `discordAvatar`. `discordOptionUtilisateur(nomCommande, nomOption, description)` ajoute un sélecteur facultatif de membre à une commande embed. Les données accessibles dépendent des permissions et du cache Discord du bot.
 
 
-## Options des commandes slash (v1.1.5)
+## Options des commandes slash (v1.1.6)
 
 Les commandes slash peuvent maintenant recevoir des options texte, nombre, entier ou booléen. Le dernier argument indique si l'option est obligatoire ; il est facultatif et vaut `false` par défaut.
 
@@ -175,3 +175,28 @@ Fonctions disponibles :
 - `discordOptionUtilisateur(commande, nom, description)` pour le sélecteur de membre existant des commandes embed.
 
 Les noms d'options doivent respecter les règles Discord (minuscules, chiffres, tirets et underscores, 1 à 32 caractères). Une commande peut avoir jusqu'à 25 options. Les types d'options sont déclarés lors de l'enregistrement des commandes ; redémarre le bot après avoir modifié leur définition. Le bot a besoin du scope `applications.commands` et de l'accès au serveur concerné. Aucun intent privilégié supplémentaire n'est requis pour ces options.
+
+
+## Choix prédéfinis des options (v1.1.6)
+
+Pour limiter les réponses possibles d'une option, ajoute des choix après avoir déclaré l'option :
+
+```fbp
+discordConnexion()
+discordCommande("couleur", "Couleur choisie : {{couleur}}")
+discordOptionTexte("couleur", "couleur", "Choisis une couleur", true)
+discordChoixTexte("couleur", "couleur", "Bleu", "bleu")
+discordChoixTexte("couleur", "couleur", "Rouge", "rouge")
+
+discordCommande("difficulte", "Niveau choisi : {{niveau}}")
+discordOptionEntier("difficulte", "niveau", "Choisis un niveau", true)
+discordChoixEntier("difficulte", "niveau", "Facile", 1)
+discordChoixEntier("difficulte", "niveau", "Normal", 2)
+discordChoixEntier("difficulte", "niveau", "Difficile", 3)
+```
+
+- `discordChoixTexte(commande, option, nomChoix, valeur)` ajoute un choix à une option texte.
+- `discordChoixEntier(commande, option, nomChoix, valeur)` ajoute un choix à une option entière.
+- Déclare toujours l'option avant ses choix.
+- Une option peut avoir jusqu'à 25 choix. Les noms de choix sont limités à 100 caractères.
+- Les choix sont présentés par Discord sous forme de liste et la valeur choisie est récupérable comme les autres options.
