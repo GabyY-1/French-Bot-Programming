@@ -57,7 +57,7 @@ test("fbp -init installe le support VS Code quand il est absent", () => {
     assert.equal(result.status, 0);
     assert.ok(fs.existsSync(path.join(cwd, "commandes.fbp")));
     assert.ok(fs.existsSync(path.join(cwd, "scripts", "main.fbp")));
-    assert.ok(fs.existsSync(path.join(cwd, ".vscode-agent", "extensions", "gabyy1.fbp-language-1.2.3", "package.json")));
+    assert.ok(fs.existsSync(path.join(cwd, ".vscode-agent", "extensions", "gabyy1.fbp-language-1.2.4", "package.json")));
   } finally {
     fs.rmSync(cwd, { recursive: true, force: true });
   }
@@ -65,7 +65,7 @@ test("fbp -init installe le support VS Code quand il est absent", () => {
 
 test("fbp -init conserve les fichiers du projet et une extension existante", () => {
   const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "fbp-init-"));
-  const extensionDir = path.join(cwd, ".vscode-agent", "extensions", "gabyy1.fbp-language-1.2.3");
+  const extensionDir = path.join(cwd, ".vscode-agent", "extensions", "gabyy1.fbp-language-1.2.4");
   fs.mkdirSync(extensionDir, { recursive: true });
   fs.writeFileSync(path.join(extensionDir, "package.json"), '{"name":"existing-extension"}\n', "utf8");
   fs.writeFileSync(path.join(extensionDir, "marker.txt"), "à conserver", "utf8");
@@ -84,8 +84,8 @@ test("fbp -init conserve les fichiers du projet et une extension existante", () 
   }
 });
 
-test("la version du CLI est 1.2.3", () => {
+test("la version du CLI correspond au package local", () => {
   const result = run(["version"]);
   assert.equal(result.status, 0);
-  assert.match(result.stdout, /FBP 1.2.3/);
+  assert.match(result.stdout, /FBP 1\.2\.4/);
 });
