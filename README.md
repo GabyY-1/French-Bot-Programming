@@ -1,36 +1,49 @@
 # FBP — French Bot Programming
 
-FBP est un langage en cours de construction, avec un CLI et une syntaxe pensée pour rester simple.
+FBP est un petit langage interprété par Node.js. Les fichiers source utilisent l'extension `.fbp`. Le projet fournit un CLI pour lancer les fichiers et les commandes définies dans `commandes.fbp`.
 
 ## Prérequis
 
 - Node.js 20 ou plus récent
 - npm
 
-## Installation dans le Codespace
+## Utiliser FBP dans un Codespace
+
+Dans le terminal du Codespace qui contient ce dépôt :
 
 ```bash
 npm install
-npm run build
+npm test
+npm link
+fbp help
+fbp ping
 ```
 
-## Commandes du CLI
+`npm test` compile le moteur TypeScript et lance les tests de fonctionnement. `npm link` ajoute la commande `fbp` à l'environnement npm de ce Codespace.
+
+Pour utiliser FBP dans un autre Codespace, clone ce dépôt dans ce Codespace, puis exécute les mêmes commandes. Le lien npm n'est pas partagé automatiquement entre deux Codespaces.
+
+## Commandes
 
 ```bash
-node dist/cli.js help
-node dist/cli.js version
-node dist/cli.js info
-node dist/cli.js ping
-node dist/cli.js run lancer
-node dist/cli.js run test
-node dist/cli.js run-file exemples/bot/main.fbp
+fbp help
+fbp version
+fbp info
+fbp ping
+fbp run lancer
+fbp run test
+fbp run-file exemples/bot/main.fbp
 ```
 
-Après compilation, `npm link` peut rendre la commande `fbp` disponible dans l'environnement Node local.
+- `fbp run <nom>` lance une commande définie dans le fichier `commandes.fbp` du dossier courant.
+- `fbp run-file <fichier>` lance directement un fichier FBP.
+- `fbp ping` vérifie que le CLI répond ; il ne se connecte pas à Discord.
+
+Si la commande `fbp` n'est pas reconnue, vérifie que `npm link` a été exécuté dans ce Codespace après `npm run build`.
 
 ## Définir les commandes
 
-Le fichier `commandes.fbp` est un objet JSON associant un nom de commande à un fichier :
+`commandes.fbp` est actuellement un fichier JSON qui associe un nom de commande à un fichier :
 
 ```json
 {
@@ -39,9 +52,9 @@ Le fichier `commandes.fbp` est un objet JSON associant un nom de commande à un 
 }
 ```
 
-Puis lance `node dist/cli.js run lancer`.
+Pour ajouter une commande, ajoute une entrée dont la valeur est le chemin d'un fichier FBP, relatif à la racine du projet qui contient `commandes.fbp`.
 
-## Syntaxe prise en charge actuellement
+## Syntaxe prise en charge
 
 ```fbp
 nom = "Gab"
@@ -55,11 +68,13 @@ lance() {
 lance()
 ```
 
-- Les variables infèrent leur type à partir des valeurs littérales.
-- Les fonctions sont déclarées avec `nom() {` puis fermées par `}`.
+- Les variables déduisent leur type à partir des valeurs littérales. Il ne faut pas déclarer explicitement leur type.
+- Les types actuellement reconnus sont texte, nombre et booléen.
+- Les fonctions sans paramètres se déclarent avec `nom() {` puis se ferment avec `}`.
 - `affiche(...)` affiche les valeurs dans le terminal.
-- `import { fonction } de "./fichier.fbp"` est reconnu pour importer des fonctions.
+- `import { fonction } de "./fichier.fbp"` permet d'importer des fonctions.
+- Les commentaires commencent par `//` ou `#`.
 
-## Limites actuelles
+## État du langage
 
-Cette version est un premier interpréteur, pas encore un compilateur complet. Les expressions arithmétiques, les paramètres de fonction, les conditions, les boucles, les valeurs de retour, la résolution complète des imports et la connexion réelle à Discord ne sont pas encore implémentés. `fbp ping` vérifie que le CLI répond ; il ne mesure pas la latence d'un bot Discord connecté.
+Cette version fournit un interpréteur de base, pas encore un langage complet. Les paramètres de fonction, les conditions, les boucles, les valeurs de retour, les expressions arithmétiques et la connexion à Discord ne sont pas encore implémentés. Le moteur doit être compilé avec `npm test` avant d'être utilisé via le CLI.
