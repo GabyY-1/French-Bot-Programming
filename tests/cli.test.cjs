@@ -47,8 +47,8 @@ test("une commande inconnue renvoie une erreur claire", () => {
   assert.match(result.stderr, /Commande « commande_inexistante » inconnue/);
 });
 
-test("la version du CLI est 1.1.2", () => {
+test("la version du CLI est 1.1.3", () => {
   const result = run(["version"]);
   assert.equal(result.status, 0);
-  assert.match(result.stdout, /FBP 1\.1\.2/);
+  assert.match(result.stdout, /FBP 1\.1\.3/);
 });
