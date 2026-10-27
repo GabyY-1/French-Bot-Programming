@@ -133,22 +133,22 @@ export class FbpCompiler {
   ): string {
     const guild = interaction.guild;
     const values: Record<string, string> = {
-      "discordServeur.nom": guild?.name ?? "Serveur indisponible",
-      "discordServeur.id": guild?.id ?? "Indisponible",
-      "discordServeur.creation": guild ? "<t:" + Math.floor(guild.createdTimestamp / 1000) + ":D>" : "Indisponible",
-      "discordMembres.nombre": guild ? String(guild.memberCount) : "Indisponible",
-      "discordProfil.nom": selectedMember?.displayName ?? selectedUser?.username ?? "Sélectionne un membre",
-      "discordProfil.id": selectedUser?.id ?? "Sélectionne un membre",
-      "discordProfil.avatar": selectedUser?.displayAvatarURL({ size: 256 }) ?? "Sélectionne un membre",
-      "discordRoles.nombre": guild ? String(guild.roles.cache.size) : "Indisponible",
-      "discordSalons.nombre": guild ? String(guild.channels.cache.size) : "Indisponible",
-      "discordStatistiques.membres": guild ? String(guild.memberCount) : "Indisponible",
-      "discordStatistiques.roles": guild ? String(guild.roles.cache.size) : "Indisponible",
-      "discordStatistiques.salons": guild ? String(guild.channels.cache.size) : "Indisponible",
-      "discordLatence": String(Math.max(0, Math.round(interaction.client.ws.ping))) + " ms",
-      "discordAvatar": selectedUser?.displayAvatarURL({ size: 256 }) ?? interaction.user.displayAvatarURL({ size: 256 })
+      "serveur.nom": guild?.name ?? "Serveur indisponible",
+      "serveur.id": guild?.id ?? "Indisponible",
+      "serveur.creation": guild ? "<t:" + Math.floor(guild.createdTimestamp / 1000) + ":D>" : "Indisponible",
+      "membres.nombre": guild ? String(guild.memberCount) : "Indisponible",
+      "profil.nom": selectedMember?.displayName ?? selectedUser?.username ?? "Sélectionne un membre",
+      "profil.id": selectedUser?.id ?? "Sélectionne un membre",
+      "profil.avatar": selectedUser?.displayAvatarURL({ size: 256 }) ?? "Sélectionne un membre",
+      "roles.nombre": guild ? String(guild.roles.cache.size) : "Indisponible",
+      "salons.nombre": guild ? String(guild.channels.cache.size) : "Indisponible",
+      "statistiques.membres": guild ? String(guild.memberCount) : "Indisponible",
+      "statistiques.roles": guild ? String(guild.roles.cache.size) : "Indisponible",
+      "statistiques.salons": guild ? String(guild.channels.cache.size) : "Indisponible",
+      "latence": String(Math.max(0, Math.round(interaction.client.ws.ping))) + " ms",
+      "avatar": selectedUser?.displayAvatarURL({ size: 256 }) ?? interaction.user.displayAvatarURL({ size: 256 })
     };
-    const optionMatch = source.trim().match(/^(?:discordOption|option)\.([a-z0-9_-]{1,32})$/);
+    const optionMatch = source.trim().match(/^(?:option|option)\.([a-z0-9_-]{1,32})$/);
     if (optionMatch) return optionValues.get(optionMatch[1]) ?? "Option indisponible : " + optionMatch[1];
     return source.trim() in values ? values[source.trim()] : "Source inconnue : " + source.trim();
   }
@@ -208,7 +208,7 @@ export class FbpCompiler {
       this.output(values.map(value => value === undefined ? "" : String(value)).join(" "));
       return;
     }
-    if (name === "discordConnexion") {
+    if (name === "connexion") {
       if (this.discordClient) throw new FbpError("La connexion Discord est déjà initialisée.", undefined, line);
       dotenv.config();
       const token = process.env.DISCORD_TOKEN;
@@ -335,10 +335,10 @@ export class FbpCompiler {
       void client.login(token).catch((error: unknown) => this.output("Connexion Discord impossible : " + (error instanceof Error ? error.message : String(error))));
       return;
     }
-    if (name === "discordCommande") {
-      if (!this.discordClient) throw new FbpError("Appelle discordConnexion() avant de déclarer une commande.", undefined, line);
+    if (name === "commande") {
+      if (!this.discordClient) throw new FbpError("Appelle connexion() avant de déclarer une commande.", undefined, line);
       if (values.length !== 2 || typeof values[0] !== "string" || typeof values[1] !== "string") {
-        throw new FbpError("Utilisation : discordCommande(\"ping\", \"Pong !\").", undefined, line);
+        throw new FbpError("Utilisation : commande(\"ping\", \"Pong !\").", undefined, line);
       }
       const commandName = values[0];
       if (!/^[a-z0-9_-]{1,32}$/.test(commandName)) {
@@ -347,20 +347,20 @@ export class FbpCompiler {
       this.discordCommands.set(commandName, { type: "text", content: values[1], options: [] });
       return;
     }
-    if (name === "discordCommandePrivee") {
-      if (!this.discordClient) throw new FbpError("Appelle discordConnexion() avant de déclarer une commande.", undefined, line);
+    if (name === "commandePrivee") {
+      if (!this.discordClient) throw new FbpError("Appelle connexion() avant de déclarer une commande.", undefined, line);
       if (values.length !== 2 || typeof values[0] !== "string" || typeof values[1] !== "string") {
-        throw new FbpError("Utilisation : discordCommandePrivee(\"nom\", \"réponse visible uniquement par l'utilisateur\").", undefined, line);
+        throw new FbpError("Utilisation : commandePrivee(\"nom\", \"réponse visible uniquement par l'utilisateur\").", undefined, line);
       }
       const [commandName, response] = values as string[];
       if (!/^[a-z0-9_-]{1,32}$/.test(commandName)) throw new FbpError("Le nom d'une commande slash doit contenir 1 à 32 caractères : lettres minuscules, chiffres, tirets ou underscores.", undefined, line);
       this.discordCommands.set(commandName, { type: "text", content: response, ephemeral: true, options: [] });
       return;
     }
-    if (name === "discordCommandeEmbed") {
-      if (!this.discordClient) throw new FbpError("Appelle discordConnexion() avant de déclarer une commande.", undefined, line);
+    if (name === "commandeEmbed") {
+      if (!this.discordClient) throw new FbpError("Appelle connexion() avant de déclarer une commande.", undefined, line);
       if (values.length !== 4 || values.some(value => typeof value !== "string")) {
-        throw new FbpError("Utilisation : discordCommandeEmbed(nom, titre, description, couleur).", undefined, line);
+        throw new FbpError("Utilisation : commandeEmbed(nom, titre, description, couleur).", undefined, line);
       }
       const [commandName, title, description, color] = values as string[];
       if (!/^[a-z0-9_-]{1,32}$/.test(commandName)) throw new FbpError("Le nom d'une commande slash doit contenir 1 à 32 caractères : lettres minuscules, chiffres, tirets ou underscores.", undefined, line);
@@ -368,9 +368,9 @@ export class FbpCompiler {
       this.discordCommands.set(commandName, { type: "embed", title, description, color, fields: [], options: [] });
       return;
     }
-    if (name === "discordChampDynamique") {
+    if (name === "champDynamique") {
       if (values.length !== 3 || values.some(value => typeof value !== "string")) {
-        throw new FbpError("Utilisation : discordChampDynamique(nomCommande, nomChamp, source).", undefined, line);
+        throw new FbpError("Utilisation : champDynamique(nomCommande, nomChamp, source).", undefined, line);
       }
       const [commandName, fieldName, source] = values as string[];
       const command = this.discordCommands.get(commandName);
@@ -380,9 +380,9 @@ export class FbpCompiler {
       command.fields.push({ name: fieldName, value: source, dynamic: true });
       return;
     }
-    if (name === "discordChoixTexte" || name === "discordChoixEntier") {
+    if (name === "choixTexte" || name === "choixEntier") {
       if (values.length !== 4 || values.some(value => typeof value !== "string" && typeof value !== "number")) {
-        throw new FbpError("Utilisation : discordChoixTexte(nomCommande, nomOption, nomChoix, valeur) ou discordChoixEntier(...).", undefined, line);
+        throw new FbpError("Utilisation : choixTexte(nomCommande, nomOption, nomChoix, valeur) ou choixEntier(...).", undefined, line);
       }
       const [commandName, optionName, choiceName, choiceValue] = values;
       if (typeof commandName !== "string" || typeof optionName !== "string" || typeof choiceName !== "string") {
@@ -391,7 +391,7 @@ export class FbpCompiler {
       const command = this.discordCommands.get(commandName);
       if (!command) throw new FbpError("La commande « " + commandName + " » n'est pas déclarée.", undefined, line);
       const option = (command.options ?? []).find(item => item.name === optionName);
-      const expectedType: DiscordOptionType = name === "discordChoixTexte" ? "texte" : "entier";
+      const expectedType: DiscordOptionType = name === "choixTexte" ? "texte" : "entier";
       if (!option || option.type !== expectedType) throw new FbpError("L'option « " + optionName + " » n'existe pas ou n'a pas le bon type.", undefined, line);
       if (!choiceName.trim() || choiceName.length > 100) throw new FbpError("Le nom d'un choix doit contenir de 1 à 100 caractères.", undefined, line);
       if (expectedType === "texte" && typeof choiceValue !== "string") throw new FbpError("La valeur d'un choix texte doit être du texte.", undefined, line);
@@ -403,14 +403,14 @@ export class FbpCompiler {
       choices.push({ name: choiceName, value: choiceValue as string | number });
       return;
     }
-    if (name === "discordOptionNombreLimites" || name === "discordOptionEntierLimites") {
+    if (name === "optionNombreLimites" || name === "optionEntierLimites") {
       if (values.length !== 4 || typeof values[0] !== "string" || typeof values[1] !== "string" || typeof values[2] !== "number" || typeof values[3] !== "number") {
-        throw new FbpError("Utilisation : discordOptionNombreLimites(commande, option, minimum, maximum) ou discordOptionEntierLimites(...).", undefined, line);
+        throw new FbpError("Utilisation : optionNombreLimites(commande, option, minimum, maximum) ou optionEntierLimites(...).", undefined, line);
       }
       const [commandName, optionName, minimum, maximum] = values as [string, string, number, number];
       const command = this.discordCommands.get(commandName);
       if (!command) throw new FbpError("La commande « " + commandName + " » n'est pas déclarée.", undefined, line);
-      const expectedType: DiscordOptionType = name === "discordOptionNombreLimites" ? "nombre" : "entier";
+      const expectedType: DiscordOptionType = name === "optionNombreLimites" ? "nombre" : "entier";
       const option = (command.options ?? []).find(item => item.name === optionName);
       if (!option || option.type !== expectedType) throw new FbpError("L'option « " + optionName + " » n'existe pas ou n'a pas le type numérique attendu.", undefined, line);
       if (!Number.isFinite(minimum) || !Number.isFinite(maximum) || minimum > maximum || (expectedType === "entier" && (!Number.isInteger(minimum) || !Number.isInteger(maximum)))) {
@@ -421,9 +421,9 @@ export class FbpCompiler {
       option.maxValue = maximum;
       return;
     }
-    if (name === "discordOptionTexte" || name === "discordOptionNombre" || name === "discordOptionEntier" || name === "discordOptionBooleen" || name === "discordOptionSalon") {
+    if (name === "optionTexte" || name === "optionNombre" || name === "optionEntier" || name === "optionBooleen" || name === "optionSalon") {
       if (values.length < 3 || values.length > 4 || values.some(value => typeof value !== "string" && typeof value !== "boolean")) {
-        throw new FbpError("Utilisation : discordOptionTexte/Nombre/Entier/Booleen/Salon(nomCommande, nomOption, description, obligatoire).", undefined, line);
+        throw new FbpError("Utilisation : optionTexte/Nombre/Entier/Booleen/Salon(nomCommande, nomOption, description, obligatoire).", undefined, line);
       }
       const [commandName, optionName, description] = values;
       const required = values.length === 4 ? values[3] : false;
@@ -437,13 +437,13 @@ export class FbpCompiler {
       const options = command.options ?? (command.options = []);
       if (options.some(option => option.name === optionName) || (command.type === "embed" && command.userOption?.name === optionName)) throw new FbpError("L'option « " + optionName + " » existe déjà pour cette commande.", undefined, line);
       if (options.length + (command.type === "embed" && command.userOption ? 1 : 0) >= 25) throw new FbpError("Une commande slash Discord ne peut pas contenir plus de 25 options.", undefined, line);
-      const type: DiscordOptionType = name === "discordOptionTexte" ? "texte" : name === "discordOptionNombre" ? "nombre" : name === "discordOptionEntier" ? "entier" : name === "discordOptionBooleen" ? "booleen" : "salon";
+      const type: DiscordOptionType = name === "optionTexte" ? "texte" : name === "optionNombre" ? "nombre" : name === "optionEntier" ? "entier" : name === "optionBooleen" ? "booleen" : "salon";
       options.push({ name: optionName, description, type, required });
       return;
     }
-    if (name === "discordOptionUtilisateur") {
+    if (name === "optionUtilisateur") {
       if (values.length !== 3 || values.some(value => typeof value !== "string")) {
-        throw new FbpError("Utilisation : discordOptionUtilisateur(nomCommande, nomOption, description).", undefined, line);
+        throw new FbpError("Utilisation : optionUtilisateur(nomCommande, nomOption, description).", undefined, line);
       }
       const [commandName, optionName, description] = values as string[];
       const command = this.discordCommands.get(commandName);
@@ -456,9 +456,9 @@ export class FbpCompiler {
       command.userOption = { name: optionName, description };
       return;
     }
-    if (name === "discordChamp") {
+    if (name === "champ") {
       if (values.length !== 3 || values.some(value => typeof value !== "string")) {
-        throw new FbpError("Utilisation : discordChamp(nomCommande, nomChamp, valeur).", undefined, line);
+        throw new FbpError("Utilisation : champ(nomCommande, nomChamp, valeur).", undefined, line);
       }
       const [commandName, fieldName, fieldValue] = values as string[];
       const command = this.discordCommands.get(commandName);
