@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { FbpError } from "./errors";
-import { Client, GatewayIntentBits, Message } from "discord.js";
+import { Client, GatewayIntentBits, SlashCommandBuilder } from "discord.js";
 import dotenv from "dotenv";
 
 type ValueType = "texte" | "nombre" | "booleen" | "inconnu";
@@ -178,21 +178,50 @@ export class FbpCompiler {
       dotenv.config();
       const token = process.env.DISCORD_TOKEN;
       if (!token) throw new FbpError("Token Discord manquant. Ajoute DISCORD_TOKEN dans le fichier .env.", undefined, line);
-      const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
+
+      const client = new Client({ intents: [GatewayIntentBits.Guilds] });
       this.discordClient = client;
-      client.once("ready", () => this.output("Connecté à Discord en tant que " + (client.user?.tag ?? "bot") + "."));
-      client.on("messageCreate", (message: Message) => {
-        if (message.author.bot || !message.guild) return;
-        const response = this.discordCommands.get(message.content);
-        if (response !== undefined) void message.reply(response).catch((error: unknown) => this.output("Erreur Discord : " + (error instanceof Error ? error.message : String(error))));
+
+      client.once("ready", async () => {
+        try {
+          const commands = [...this.discordCommands.entries()].map(([commandName]) =>
+            new SlashCommandBuilder()
+              .setName(commandName)
+              .setDescription(`Commande ${commandName} du bot FBP`)
+              .toJSON()
+          );
+          await client.application?.commands.set(commands);
+          this.output("Connecté à Discord en tant que " + (client.user?.tag ?? "bot") + ".");
+          this.output("Commandes slash enregistrées : " + commands.length + ".");
+        } catch (error: unknown) {
+          this.output("Enregistrement des commandes slash impossible : " + (error instanceof Error ? error.message : String(error)));
+        }
       });
+
+      client.on("interactionCreate", async interaction => {
+        if (!interaction.isChatInputCommand()) return;
+        const response = this.discordCommands.get(interaction.commandName);
+        if (response === undefined) return;
+        try {
+          await interaction.reply(response);
+        } catch (error: unknown) {
+          this.output("Erreur Discord : " + (error instanceof Error ? error.message : String(error)));
+        }
+      });
+
       void client.login(token).catch((error: unknown) => this.output("Connexion Discord impossible : " + (error instanceof Error ? error.message : String(error))));
       return;
     }
     if (name === "discordCommande") {
       if (!this.discordClient) throw new FbpError("Appelle discordConnexion() avant de déclarer une commande.", undefined, line);
-      if (values.length !== 2 || typeof values[0] !== "string" || typeof values[1] !== "string") throw new FbpError("Utilisation : discordCommande(\"!ping\", \"Pong !\").", undefined, line);
-      this.discordCommands.set(values[0], values[1]);
+      if (values.length !== 2 || typeof values[0] !== "string" || typeof values[1] !== "string") {
+        throw new FbpError("Utilisation : discordCommande(\"ping\", \"Pong !\").", undefined, line);
+      }
+      const commandName = values[0];
+      if (!/^[a-z0-9_-]{1,32}$/.test(commandName)) {
+        throw new FbpError("Le nom d'une commande slash doit contenir 1 à 32 caractères : lettres minuscules, chiffres, tirets ou underscores.", undefined, line);
+      }
+      this.discordCommands.set(commandName, values[1]);
       return;
     }
     if (name === "ping") {
