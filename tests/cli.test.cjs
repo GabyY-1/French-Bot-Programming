@@ -8,6 +8,7 @@ const os = require("node:os");
 const root = path.resolve(__dirname, "..");
 const cli = path.join(root, "dist", "cli.js");
 const fixtures = path.join(__dirname, "fixtures");
+const packageVersion = require("../package.json").version;
 
 function run(args, cwd = root, env = process.env) {
   return spawnSync(process.execPath, [cli, ...args], {
@@ -87,5 +88,5 @@ test("fbp -init conserve les fichiers du projet et une extension existante", () 
 test("la version du CLI correspond au package local", () => {
   const result = run(["version"]);
   assert.equal(result.status, 0);
-  assert.match(result.stdout, /FBP 1\.2\.4/);
+  assert.match(result.stdout, new RegExp(`FBP ${packageVersion.replace(/\./g, "\\.")}`));
 });
