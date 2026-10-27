@@ -11,6 +11,7 @@ type Statement =
 
 export interface RunOptions {
   onOutput?: (value: unknown) => void;
+  nativeFunctions?: Record<string, (...args: unknown[]) => unknown>;
 }
 
 function valueType(value: string): ValueType {
@@ -109,16 +110,26 @@ export class FbpCompiler {
   private functions = new Map<string, Statement & { kind: "function" }>();
   private imports = new Map<string, string>();
   private output: (value: unknown) => void;
+  private nativeFunctions: Record<string, (...args: unknown[]) => unknown>;
+  private baseDir = process.cwd();
 
   constructor(options: RunOptions = {}) {
     this.output = options.onOutput ?? (value => console.log(value));
+    this.nativeFunctions = options.nativeFunctions ?? {};
   }
 
   runFile(filePath: string): void {
     const absolute = path.resolve(filePath);
     if (!fs.existsSync(absolute)) throw new FbpError(`Fichier introuvable : ${absolute}`);
     if (!fs.statSync(absolute).isFile()) throw new FbpError(`Le chemin indiqué n'est pas un fichier : ${absolute}`);
-    this.execute(parseFile(absolute, fs.readFileSync(absolute, "utf8")), path.dirname(absolute));
+    this.baseDir = path.dirname(absolute);
+    this.execute(parseFile(absolute, fs.readFileSync(absolute, "utf8")), this.baseDir);
+  }
+
+  runFunction(name: string): void {
+    const fn = this.functions.get(name);
+    if (!fn) throw new FbpError(`Fonction « ${name} » inconnue.`);
+    this.execute(fn.body, this.imports.has(name) ? path.dirname(this.imports.get(name)!) : this.baseDir);
   }
 
   private execute(statements: Statement[], baseDir: string): void {
@@ -171,6 +182,11 @@ export class FbpCompiler {
     }
     if (name === "ping") {
       this.output("FBP fonctionne. Cette commande ne vérifie pas à elle seule une connexion Discord.");
+      return;
+    }
+    const nativeFunction = this.nativeFunctions[name];
+    if (nativeFunction) {
+      nativeFunction(...values);
       return;
     }
     const fn = this.functions.get(name);
