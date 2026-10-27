@@ -158,6 +158,12 @@ Le dernier argument indique si l'option est obligatoire. La réponse affiche le 
 - `fbp -init` conserve les fichiers déjà présents dans le projet et dans le dossier de l’extension VS Code.
 - La résolution des champs dynamiques `option.nom` utilise une règle de reconnaissance simplifiée.
 
+## Nouveautés de FBP 1.2.4
+
+- `fbp version` lit automatiquement la version installée depuis `package.json`.
+- La commande consulte le registre npm pour afficher la dernière version publiée de `fbp-language`.
+- Si une version plus récente existe, elle affiche la commande de mise à jour. Si npm est inaccessible, elle affiche la version locale sans échouer.
+
 ## Limites actuelles
 
 FBP est encore un interpréteur de base. Les paramètres de fonction, les conditions, les boucles, les valeurs de retour et les expressions arithmétiques ne sont pas encore implémentés. La connexion Discord utilise un token stocké dans `.env`. Les commandes slash peuvent répondre avec un texte fixe ou un embed défini avec `commandeEmbed(nom, titre, description, couleur)`. Ajoute des champs avec `champ(nomCommande, nomChamp, valeur)`. Les valeurs des embeds sont actuellement fixes : la récupération dynamique des informations du serveur, les options, paramètres, permissions avancées et conditions ne sont pas encore implémentés.
