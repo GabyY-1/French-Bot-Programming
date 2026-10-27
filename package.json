@@ -74,6 +74,5 @@
         "path": "./syntaxes/fbp.tmLanguage.json"
       }
     ]
-  },
-  "icon": "assets/fbp-logo.png"
+  }
 }
