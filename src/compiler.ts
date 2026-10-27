@@ -1,6 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { FbpError } from "./errors";
+import { Client, GatewayIntentBits, Message } from "discord.js";
+import dotenv from "dotenv";
 
 type ValueType = "texte" | "nombre" | "booleen" | "inconnu";
 type Statement =
@@ -109,6 +111,8 @@ export class FbpCompiler {
   private functions = new Map<string, Statement & { kind: "function" }>();
   private imports = new Map<string, string>();
   private output: (value: unknown) => void;
+  private discordClient?: Client;
+  private discordCommands = new Map<string, string>();
 
   constructor(options: RunOptions = {}) {
     this.output = options.onOutput ?? (value => console.log(value));
@@ -167,6 +171,28 @@ export class FbpCompiler {
     const values = args.map(arg => this.evaluate(arg, line));
     if (name === "affiche") {
       this.output(values.map(value => value === undefined ? "" : String(value)).join(" "));
+      return;
+    }
+    if (name === "discordConnexion") {
+      if (this.discordClient) throw new FbpError("La connexion Discord est déjà initialisée.", undefined, line);
+      dotenv.config();
+      const token = process.env.DISCORD_TOKEN;
+      if (!token) throw new FbpError("Token Discord manquant. Ajoute DISCORD_TOKEN dans le fichier .env.", undefined, line);
+      const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
+      this.discordClient = client;
+      client.once("ready", () => this.output("Connecté à Discord en tant que " + (client.user?.tag ?? "bot") + "."));
+      client.on("messageCreate", (message: Message) => {
+        if (message.author.bot || !message.guild) return;
+        const response = this.discordCommands.get(message.content);
+        if (response !== undefined) void message.reply(response).catch(error => this.output("Erreur Discord : " + (error instanceof Error ? error.message : String(error))));
+      });
+      void client.login(token).catch(error => this.output("Connexion Discord impossible : " + (error instanceof Error ? error.message : String(error))));
+      return;
+    }
+    if (name === "discordCommande") {
+      if (!this.discordClient) throw new FbpError("Appelle discordConnexion() avant de déclarer une commande.", undefined, line);
+      if (values.length !== 2 || typeof values[0] !== "string" || typeof values[1] !== "string") throw new FbpError("Utilisation : discordCommande(\"!ping\", \"Pong !\").", undefined, line);
+      this.discordCommands.set(values[0], values[1]);
       return;
     }
     if (name === "ping") {
