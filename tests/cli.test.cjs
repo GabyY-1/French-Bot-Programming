@@ -57,14 +57,14 @@ test("fbp -init crée les fichiers sans écraser les fichiers existants", () => 
     assert.equal(result.status, 0);
     assert.ok(fs.existsSync(path.join(cwd, "commandes.fbp")));
     assert.ok(fs.existsSync(path.join(cwd, "scripts", "main.fbp")));
-    assert.ok(fs.existsSync(path.join(cwd, ".vscode-agent", "extensions", "gabyy1.fbp-language-1.2.0", "package.json")));
+    assert.ok(fs.existsSync(path.join(cwd, ".vscode-agent", "extensions", "gabyy1.fbp-language-1.2.1", "package.json")));
   } finally {
     fs.rmSync(cwd, { recursive: true, force: true });
   }
 });
 
-test("la version du CLI est 1.2.0", () => {
+test("la version du CLI est 1.2.1", () => {
   const result = run(["version"]);
   assert.equal(result.status, 0);
-  assert.match(result.stdout, /FBP 1\.1\.9/);
+  assert.match(result.stdout, /FBP 1.2.1/);
 });
