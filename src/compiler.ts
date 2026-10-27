@@ -106,7 +106,7 @@ function parseFile(file: string, source: string): Statement[] {
   return root;
 }
 
-type DiscordOptionType = "texte" | "nombre" | "entier" | "booleen";
+type DiscordOptionType = "texte" | "nombre" | "entier" | "booleen" | "salon";
 type DiscordOption = { name: string; description: string; type: DiscordOptionType; required: boolean; choices?: Array<{ name: string; value: string | number }>; minValue?: number; maxValue?: number };
 type DiscordResponse =
   | { type: "text"; content: string; options?: DiscordOption[] }
@@ -251,7 +251,8 @@ export class FbpCompiler {
                   for (const choice of option.choices ?? []) if (typeof choice.value === "number") item.addChoices({ name: choice.name, value: choice.value });
                   return item;
                 }),
-                booleen: () => builder.addBooleanOption(item => item.setName(option.name).setDescription(option.description).setRequired(option.required))
+                booleen: () => builder.addBooleanOption(item => item.setName(option.name).setDescription(option.description).setRequired(option.required)),
+                salon: () => builder.addChannelOption(item => item.setName(option.name).setDescription(option.description).setRequired(option.required))
               }[option.type];
               add();
             }
@@ -287,9 +288,12 @@ export class FbpCompiler {
             } else if (option.type === "entier") {
               const number = interaction.options.getInteger(option.name);
               value = number === null ? null : String(number);
-            } else {
+            } else if (option.type === "booleen") {
               const boolean = interaction.options.getBoolean(option.name);
               value = boolean === null ? null : String(boolean);
+            } else {
+              const channel = interaction.options.getChannel(option.name);
+              value = channel === null ? null : "#" + channel.name;
             }
             if (value === null && option.required) {
               await interaction.reply({ content: "Option obligatoire indisponible : " + option.name, ephemeral: true });
@@ -407,9 +411,9 @@ export class FbpCompiler {
       option.maxValue = maximum;
       return;
     }
-    if (name === "discordOptionTexte" || name === "discordOptionNombre" || name === "discordOptionEntier" || name === "discordOptionBooleen") {
+    if (name === "discordOptionTexte" || name === "discordOptionNombre" || name === "discordOptionEntier" || name === "discordOptionBooleen" || name === "discordOptionSalon") {
       if (values.length < 3 || values.length > 4 || values.some(value => typeof value !== "string" && typeof value !== "boolean")) {
-        throw new FbpError("Utilisation : discordOptionTexte/Nombre/Entier/Booleen(nomCommande, nomOption, description, obligatoire).", undefined, line);
+        throw new FbpError("Utilisation : discordOptionTexte/Nombre/Entier/Booleen/Salon(nomCommande, nomOption, description, obligatoire).", undefined, line);
       }
       const [commandName, optionName, description] = values;
       const required = values.length === 4 ? values[3] : false;
@@ -423,7 +427,7 @@ export class FbpCompiler {
       const options = command.options ?? (command.options = []);
       if (options.some(option => option.name === optionName) || (command.type === "embed" && command.userOption?.name === optionName)) throw new FbpError("L'option « " + optionName + " » existe déjà pour cette commande.", undefined, line);
       if (options.length + (command.type === "embed" && command.userOption ? 1 : 0) >= 25) throw new FbpError("Une commande slash Discord ne peut pas contenir plus de 25 options.", undefined, line);
-      const type: DiscordOptionType = name === "discordOptionTexte" ? "texte" : name === "discordOptionNombre" ? "nombre" : name === "discordOptionEntier" ? "entier" : "booleen";
+      const type: DiscordOptionType = name === "discordOptionTexte" ? "texte" : name === "discordOptionNombre" ? "nombre" : name === "discordOptionEntier" ? "entier" : name === "discordOptionBooleen" ? "booleen" : "salon";
       options.push({ name: optionName, description, type, required });
       return;
     }
