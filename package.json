@@ -1,0 +1,43 @@
+{
+  "name": "fbp-language",
+  "displayName": "FBP - French Bot Programming",
+  "description": "Coloration syntaxique pour le langage FBP.",
+  "version": "0.1.0",
+  "publisher": "gaby-y-1",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Themes"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "fbp",
+        "aliases": [
+          "FBP",
+          "French Bot Programming"
+        ],
+        "extensions": [
+          ".fbp"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "fbp",
+        "scopeName": "source.fbp",
+        "path": "./syntaxes/fbp.tmLanguage.json"
+      }
+    ],
+    "themes": [
+      {
+        "label": "FBP Dark",
+        "uiTheme": "vs-dark",
+        "path": "./themes/fbp-dark-color-theme.json"
+      }
+    ]
+  }
+}
