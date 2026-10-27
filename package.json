@@ -2,7 +2,7 @@
   "name": "fbp-language",
   "displayName": "FBP - French Bot Programming",
   "description": "Interpréteur et CLI du langage FBP.",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "type": "commonjs",
   "main": "dist/compiler.js",
   "bin": {
