@@ -105,7 +105,7 @@ function parseFile(file: string, source: string): Statement[] {
 }
 
 export class FbpCompiler {
-  private variables = new Map<string, ValueType>();
+  private variables = new Map<string, { type: ValueType; value: unknown }>();
   private functions = new Map<string, Statement & { kind: "function" }>();
   private imports = new Map<string, string>();
   private output: (value: unknown) => void;
@@ -140,11 +140,11 @@ export class FbpCompiler {
       } else if (statement.kind === "assign") {
         const type = valueType(statement.value);
         const previous = this.variables.get(statement.name);
-        if (previous && type !== "inconnu" && previous !== type) {
-          throw new FbpError(`Type incompatible pour « ${statement.name} » : attendu ${previous}, reçu ${type}.`, undefined, statement.line);
+        if (previous && type !== "inconnu" && previous.type !== "inconnu" && previous.type !== type) {
+          throw new FbpError(`Type incompatible pour « ${statement.name} » : attendu ${previous.type}, reçu ${type}.`, undefined, statement.line);
         }
-        this.variables.set(statement.name, previous ?? type);
-        this.evaluate(statement.value, statement.line);
+        const value = this.evaluate(statement.value, statement.line);
+        this.variables.set(statement.name, { type: previous?.type ?? type, value });
       } else {
         this.call(statement.name, statement.args, statement.line, baseDir);
       }
@@ -159,7 +159,7 @@ export class FbpCompiler {
     if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
       return value.slice(1, -1).replace(/\\n/g, "\n").replace(/\\t/g, "\t").replace(/\\(["'\\])/g, "$1");
     }
-    if (this.variables.has(value)) return undefined;
+    if (this.variables.has(value)) return this.variables.get(value)!.value;
     throw new FbpError(`Valeur inconnue « ${value} ». Utilise un texte, un nombre, true, false ou une variable déclarée.`, undefined, line);
   }
 
