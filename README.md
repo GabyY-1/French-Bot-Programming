@@ -23,7 +23,7 @@ Puis, dans le `package.json` de ton projet :
     "start": "fbp run lancer"
   },
   "dependencies": {
-    "fbp-language": "^1.0.0"
+    "fbp-language": "^1.1.1"
   }
 }
 ```
@@ -90,9 +90,31 @@ lance()
 - `import { fonction } de "./fichier.fbp"` importe des fonctions.
 - Les commentaires commencent par `//` ou `#`.
 
+## Créer un bot Discord
+
+Installe FBP dans le projet du bot, puis crée un fichier `.env` à la racine :
+
+```env
+DISCORD_TOKEN=ton_token_discord
+```
+
+Ne partage jamais ce fichier et ajoute `.env` à `.gitignore`.
+
+Dans `scripts/main.fbp` :
+
+```fbp
+discordConnexion()
+discordCommande("!ping", "Pong !")
+discordCommande("!bonjour", "Salut !")
+```
+
+Associe `lancer` à `scripts/main.fbp` dans `commandes.fbp`, puis exécute `npx fbp run lancer`. Dans le portail développeur Discord, active **Message Content Intent**.
+
+Les commandes texte exactes sont prises en charge pour l'instant. Les commandes slash ne le sont pas encore.
+
 ## Limites actuelles
 
-FBP est encore un interpréteur de base. Les paramètres de fonction, les conditions, les boucles, les valeurs de retour et les expressions arithmétiques ne sont pas encore implémentés. La connexion à Discord n'est pas incluse dans le moteur.
+FBP est encore un interpréteur de base. Les paramètres de fonction, les conditions, les boucles, les valeurs de retour et les expressions arithmétiques ne sont pas encore implémentés. La connexion Discord utilise un token stocké dans `.env`. Les commandes slash, les paramètres et les conditions ne sont pas encore implémentés.
 
 ## Développement du dépôt
 
