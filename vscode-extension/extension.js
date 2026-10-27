@@ -73,6 +73,10 @@ function validateDocument(document, collection) {
   const lines = document.getText().split(/\r?\n/);
   const stack = [];
   const functionNames = new Set();
+  for (const raw of lines) {
+    const match = raw.trim().match(/^([\\p{L}_][\\p{L}\\p{N}_]*)\\s*\\(\\s*\\)\\s*\\{$/u);
+    if (match) functionNames.add(match[1]);
+  }
   const builtInNames = new Set(builtins.map(([name]) => name));
   const declaration = /^([\p{L}_][\p{L}\p{N}_]*)\s*\(\s*\)\s*\{$/u;
   const assignment = /^([\p{L}_][\p{L}\p{N}_]*)\s*=\s*(.+)$/u;
