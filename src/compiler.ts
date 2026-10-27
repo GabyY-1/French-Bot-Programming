@@ -292,6 +292,7 @@ export class FbpCompiler {
             const guild = interaction.guild;
             const selectedUser = response.userOption ? interaction.options.getUser(response.userOption.name) : null;
             const selectedMember = selectedUser && guild ? await guild.members.fetch(selectedUser.id).catch(() => null) : null;
+            if (response.userOption && selectedUser) optionValues.set(response.userOption.name, selectedMember?.displayName ?? selectedUser.username);
             const fields = response.fields.map(field => ({
               name: field.name,
               value: field.dynamic ? this.resolveDiscordValue(field.value, interaction, selectedUser, selectedMember, optionValues) : field.value.replace(/\\{\\{([a-z0-9_-]{1,32})\\}\\}/g, (match, name: string) => optionValues.get(name) ?? match),
@@ -301,7 +302,11 @@ export class FbpCompiler {
             await interaction.reply({ embeds: [embed] });
           }
         } catch (error: unknown) {
+          const message = "Une erreur est survenue pendant l'exécution de cette commande.";
           this.output("Erreur Discord : " + (error instanceof Error ? error.message : String(error)));
+          if (!interaction.replied && !interaction.deferred) {
+            await interaction.reply({ content: message, ephemeral: true }).catch(() => undefined);
+          }
         }
       });
 
@@ -374,7 +379,7 @@ export class FbpCompiler {
       if (!description.trim() || description.length > 100) throw new FbpError("La description de l'option doit contenir 1 à 100 caractères.", undefined, line);
       const options = command.options ?? (command.options = []);
       if (options.some(option => option.name === optionName) || command.userOption?.name === optionName) throw new FbpError("L'option « " + optionName + " » existe déjà pour cette commande.", undefined, line);
-      if (options.length + 1 >= 25) throw new FbpError("Une commande slash Discord ne peut pas contenir plus de 25 options.", undefined, line);
+      if (options.length + 1 > 25) throw new FbpError("Une commande slash Discord ne peut pas contenir plus de 25 options.", undefined, line);
       command.userOption = { name: optionName, description };
       return;
     }
