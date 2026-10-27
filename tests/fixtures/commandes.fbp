@@ -1,0 +1,4 @@
+{
+  "test": "tests/fixtures/test.fbp",
+  "lancer": "tests/fixtures/main.fbp"
+}
