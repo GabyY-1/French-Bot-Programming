@@ -1,8 +1,8 @@
 {
   "name": "fbp-language",
   "displayName": "FBP - French Bot Programming",
-  "description": "Interpréteur et CLI du langage FBP.",
-  "version": "1.0.0",
+  "description": "Langage FBP avec prise en charge des bots Discord.",
+  "version": "1.1.1",
   "type": "commonjs",
   "main": "dist/compiler.js",
   "bin": {
@@ -42,5 +42,9 @@
     "@types/node": "^22.10.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.2"
+  },
+  "dependencies": {
+    "discord.js": "^14.19.3",
+    "dotenv": "^16.4.7"
   }
 }
