@@ -10,7 +10,10 @@
   },
   "files": [
     "dist/",
-    "README.md"
+    "README.md",
+    "syntaxes/",
+    "assets/",
+    "language-configuration.json"
   ],
   "repository": {
     "type": "git",
@@ -49,5 +52,28 @@
   "dependencies": {
     "discord.js": "^14.19.3",
     "dotenv": "^16.4.7"
-  }
+  },
+  "contributes": {
+    "languages": [
+      {
+        "id": "fbp",
+        "aliases": [
+          "FBP",
+          "fbp"
+        ],
+        "extensions": [
+          ".fbp"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "fbp",
+        "scopeName": "source.fbp",
+        "path": "./syntaxes/fbp.tmLanguage.json"
+      }
+    ]
+  },
+  "icon": "assets/fbp-logo.png"
 }
