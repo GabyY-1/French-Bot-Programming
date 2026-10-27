@@ -382,6 +382,7 @@ export class FbpCompiler {
       if (!choiceName.trim() || choiceName.length > 100) throw new FbpError("Le nom d'un choix doit contenir de 1 à 100 caractères.", undefined, line);
       if (expectedType === "texte" && typeof choiceValue !== "string") throw new FbpError("La valeur d'un choix texte doit être du texte.", undefined, line);
       if (expectedType === "entier" && (typeof choiceValue !== "number" || !Number.isInteger(choiceValue))) throw new FbpError("La valeur d'un choix entier doit être un nombre entier.", undefined, line);
+      if (option.minValue !== undefined || option.maxValue !== undefined) throw new FbpError("Une option avec des limites numériques ne peut pas recevoir de choix prédéfinis.", undefined, line);
       const choices = option.choices ?? (option.choices = []);
       if (choices.some(choice => choice.name === choiceName || choice.value === choiceValue)) throw new FbpError("Ce nom ou cette valeur de choix existe déjà.", undefined, line);
       if (choices.length >= 25) throw new FbpError("Une option Discord ne peut pas contenir plus de 25 choix.", undefined, line);
