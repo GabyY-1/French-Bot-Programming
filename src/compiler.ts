@@ -184,9 +184,9 @@ export class FbpCompiler {
       client.on("messageCreate", (message: Message) => {
         if (message.author.bot || !message.guild) return;
         const response = this.discordCommands.get(message.content);
-        if (response !== undefined) void message.reply(response).catch(error => this.output("Erreur Discord : " + (error instanceof Error ? error.message : String(error))));
+        if (response !== undefined) void message.reply(response).catch((error: unknown) => this.output("Erreur Discord : " + (error instanceof Error ? error.message : String(error))));
       });
-      void client.login(token).catch(error => this.output("Connexion Discord impossible : " + (error instanceof Error ? error.message : String(error))));
+      void client.login(token).catch((error: unknown) => this.output("Connexion Discord impossible : " + (error instanceof Error ? error.message : String(error))));
       return;
     }
     if (name === "discordCommande") {
