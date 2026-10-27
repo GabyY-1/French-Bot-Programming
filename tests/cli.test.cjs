@@ -5,10 +5,11 @@ const path = require("node:path");
 
 const root = path.resolve(__dirname, "..");
 const cli = path.join(root, "dist", "cli.js");
+const fixtures = path.join(__dirname, "fixtures");
 
-function run(args) {
+function run(args, cwd = root) {
   return spawnSync(process.execPath, [cli, ...args], {
-    cwd: root,
+    cwd,
     encoding: "utf8"
   });
 }
@@ -26,22 +27,22 @@ test("la commande ping répond", () => {
   assert.match(result.stdout, /FBP : opérationnel/);
 });
 
-test("une commande déclarée s'exécute", () => {
-  const result = run(["run", "test"]);
+test("une commande déclarée s'exécute depuis un projet", () => {
+  const result = run(["run", "test"], fixtures);
   assert.equal(result.status, 0);
   assert.match(result.stdout, /Les commandes FBP fonctionnent\./);
   assert.match(result.stdout, /Cette commande ne vérifie pas/);
 });
 
 test("un fichier FBP peut être lancé directement", () => {
-  const result = run(["run-file", "exemples/bot/main.fbp"]);
+  const result = run(["run-file", "tests/fixtures/main.fbp"]);
   assert.equal(result.status, 0);
   assert.match(result.stdout, /Le programme FBP démarre\./);
   assert.match(result.stdout, /Projet : FBP/);
 });
 
 test("une commande inconnue renvoie une erreur claire", () => {
-  const result = run(["run", "commande_inexistante"]);
+  const result = run(["run", "commande_inexistante"], fixtures);
   assert.equal(result.status, 1);
   assert.match(result.stderr, /Commande « commande_inexistante » inconnue/);
 });
