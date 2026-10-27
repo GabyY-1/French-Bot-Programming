@@ -23,7 +23,7 @@ Puis, dans le `package.json` de ton projet :
     "start": "fbp run lancer"
   },
   "dependencies": {
-    "fbp-language": "^1.1.6"
+    "fbp-language": "^1.1.8"
   }
 }
 ```
@@ -114,6 +114,18 @@ discordChamp("serveur-info", "Membres", "42")
 Associe `lancer` à `scripts/main.fbp` dans `commandes.fbp`, puis exécute `npx fbp run lancer`. Dans le portail développeur Discord, vérifie que le bot est invité sur ton serveur avec les scopes `bot` et `applications.commands`. Seul l'intent serveur (`Guilds`) est nécessaire.
 
 FBP enregistre les commandes déclarées comme commandes slash globales de l'application Discord. Leur apparition peut prendre un peu de temps après le premier enregistrement. Les noms doivent contenir de 1 à 32 caractères parmi les lettres minuscules, chiffres, tirets et underscores.
+
+## Sélecteur de salon Discord (v1.1.8)
+
+Une commande slash peut proposer un sélecteur de salon Discord. La valeur choisie est réutilisable dans la réponse avec `{{salon}}` :
+
+```fbp
+discordConnexion()
+discordCommande("configurer", "Salon sélectionné : {{salon}}")
+discordOptionSalon("configurer", "salon", "Choisis un salon", true)
+```
+
+Le dernier argument indique si l'option est obligatoire. La réponse affiche le nom du salon précédé de `#`. Cette option peut être ajoutée aux commandes texte ou aux commandes embed, comme les autres options slash.
 
 ## Limites actuelles
 
