@@ -148,7 +148,8 @@ export class FbpCompiler {
       "discordLatence": String(Math.max(0, Math.round(interaction.client.ws.ping))) + " ms",
       "discordAvatar": selectedUser?.displayAvatarURL({ size: 256 }) ?? interaction.user.displayAvatarURL({ size: 256 })
     };
-    const optionMatch = source.trim().match(/^(?:discordOption|option)\\.([a-z0-9_-]{1,32})$/);\n    if (optionMatch) return optionValues.get(optionMatch[1]) ?? "Option indisponible : " + optionMatch[1];\n    return source.trim() in values ? values[source.trim()] : "Source inconnue : " + source.trim();
+    const optionMatch = source.trim().match(/^(?:discordOption|option)\\.([a-z0-9_-]{1,32})$/);\n    if (optionMatch) return optionValues.get(optionMatch[1]) ?? "Option indisponible : " + optionMatch[1];
+    return source.trim() in values ? values[source.trim()] : "Source inconnue : " + source.trim();
   }
 
   runFile(filePath: string): void {
@@ -280,7 +281,7 @@ export class FbpCompiler {
             if (value !== null) optionValues.set(option.name, value);
           }
           if (response.type === "text") {
-            const content = response.content.replace(/\\{\\{([a-z0-9_-]{1,32})\\}\\}/g, (match, name: string) =>
+            const content = response.content.replace(/\{\{([a-z0-9_-]{1,32})\}\}/g, (match, name: string) =>
               optionValues.has(name) ? optionValues.get(name)! : match
             );
             await interaction.reply(content);
@@ -295,7 +296,7 @@ export class FbpCompiler {
             if (response.userOption && selectedUser) optionValues.set(response.userOption.name, selectedMember?.displayName ?? selectedUser.username);
             const fields = response.fields.map(field => ({
               name: field.name,
-              value: field.dynamic ? this.resolveDiscordValue(field.value, interaction, selectedUser, selectedMember, optionValues) : field.value.replace(/\\{\\{([a-z0-9_-]{1,32})\\}\\}/g, (match, name: string) => optionValues.get(name) ?? match),
+              value: field.dynamic ? this.resolveDiscordValue(field.value, interaction, selectedUser, selectedMember, optionValues) : field.value.replace(/\{\{([a-z0-9_-]{1,32})\}\}/g, (match, name: string) => optionValues.get(name) ?? match),
               inline: false
             }));
             if (fields.length) embed.addFields(fields);
