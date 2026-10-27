@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { FbpError } from "./errors";
-import { Client, GatewayIntentBits, SlashCommandBuilder } from "discord.js";
+import { Client, EmbedBuilder, GatewayIntentBits, SlashCommandBuilder } from "discord.js";
 import dotenv from "dotenv";
 
 type ValueType = "texte" | "nombre" | "booleen" | "inconnu";
@@ -106,13 +106,17 @@ function parseFile(file: string, source: string): Statement[] {
   return root;
 }
 
+type DiscordResponse =
+  | { type: "text"; content: string }
+  | { type: "embed"; title: string; description: string; color: string; fields: Array<{ name: string; value: string }> };
+
 export class FbpCompiler {
   private variables = new Map<string, { type: ValueType; value: unknown }>();
   private functions = new Map<string, Statement & { kind: "function" }>();
   private imports = new Map<string, string>();
   private output: (value: unknown) => void;
   private discordClient?: Client;
-  private discordCommands = new Map<string, string>();
+  private discordCommands = new Map<string, DiscordResponse>();
 
   constructor(options: RunOptions = {}) {
     this.output = options.onOutput ?? (value => console.log(value));
@@ -210,7 +214,15 @@ export class FbpCompiler {
         const response = this.discordCommands.get(interaction.commandName);
         if (response === undefined) return;
         try {
-          await interaction.reply(response);
+          if (response.type === "text") {
+            await interaction.reply(response.content);
+          } else {
+            const embed = new EmbedBuilder()
+              .setTitle(response.title)
+              .setDescription(response.description)
+              .setColor(Number.parseInt(response.color.slice(1), 16));
+            if (response.fields.length) embed.addFields(response.fields.map(field => ({ name: field.name, value: field.value, inline: false })));
+            await interaction.reply({ embeds: [embed] });
         } catch (error: unknown) {
           this.output("Erreur Discord : " + (error instanceof Error ? error.message : String(error)));
         }
@@ -228,7 +240,30 @@ export class FbpCompiler {
       if (!/^[a-z0-9_-]{1,32}$/.test(commandName)) {
         throw new FbpError("Le nom d'une commande slash doit contenir 1 à 32 caractères : lettres minuscules, chiffres, tirets ou underscores.", undefined, line);
       }
-      this.discordCommands.set(commandName, values[1]);
+      this.discordCommands.set(commandName, { type: "text", content: values[1] });
+      return;
+    }
+    if (name === "discordCommandeEmbed") {
+      if (!this.discordClient) throw new FbpError("Appelle discordConnexion() avant de déclarer une commande.", undefined, line);
+      if (values.length !== 4 || values.some(value => typeof value !== "string")) {
+        throw new FbpError("Utilisation : discordCommandeEmbed(nom, titre, description, couleur).", undefined, line);
+      }
+      const [commandName, title, description, color] = values as string[];
+      if (!/^[a-z0-9_-]{1,32}$/.test(commandName)) throw new FbpError("Le nom d'une commande slash doit contenir 1 à 32 caractères : lettres minuscules, chiffres, tirets ou underscores.", undefined, line);
+      if (!/^#[0-9a-fA-F]{6}$/.test(color)) throw new FbpError("La couleur d'un embed doit être au format hexadécimal, par exemple #5865F2.", undefined, line);
+      this.discordCommands.set(commandName, { type: "embed", title, description, color, fields: [] });
+      return;
+    }
+    if (name === "discordChamp") {
+      if (values.length !== 3 || values.some(value => typeof value !== "string")) {
+        throw new FbpError("Utilisation : discordChamp(nomCommande, nomChamp, valeur).", undefined, line);
+      }
+      const [commandName, fieldName, fieldValue] = values as string[];
+      const command = this.discordCommands.get(commandName);
+      if (!command || command.type !== "embed") throw new FbpError("La commande « " + commandName + " » n'est pas un embed déclaré.", undefined, line);
+      if (command.fields.length >= 25) throw new FbpError("Un embed Discord ne peut pas contenir plus de 25 champs.", undefined, line);
+      if (!fieldName.trim() || !fieldValue.trim() || fieldName.length > 256 || fieldValue.length > 1024) throw new FbpError("Un champ doit avoir un nom (1 à 256 caractères) et une valeur (1 à 1024 caractères).", undefined, line);
+      command.fields.push({ name: fieldName, value: fieldValue });
       return;
     }
     if (name === "ping") {
