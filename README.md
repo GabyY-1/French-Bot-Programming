@@ -25,7 +25,7 @@ Puis, dans le `package.json` de ton projet :
     "start": "fbp run lancer"
   },
   "dependencies": {
-    "fbp-language": "^1.2.1"
+    "fbp-language": "^1.2.3"
   }
 }
 ```
@@ -65,7 +65,7 @@ Dans le dossier de ton projet, exécute :
 fbp -init
 ```
 
-La commande crée `commandes.fbp` et `scripts/main.fbp` sans écraser les fichiers existants. Elle installe également le support FBP fourni avec le package dans le dossier des extensions VS Code de l’utilisateur. Si tu utilises une instance distante ou un environnement sans dossier d’extensions accessible, l’installation peut nécessiter une configuration manuelle. Recharge ensuite VS Code. Pour l’icône FBP, sélectionne `FBP File Icons` dans **Préférences : Thème d’icônes de fichiers**.
+La commande crée `commandes.fbp` et `scripts/main.fbp` sans écraser les fichiers existants. Elle installe également le support FBP fourni avec le package dans le dossier des extensions VS Code de l’utilisateur. Si le dossier de cette version de l’extension existe déjà, il est conservé et n’est pas remplacé. Si tu utilises une instance distante ou un environnement sans dossier d’extensions accessible, l’installation peut nécessiter une configuration manuelle. Recharge ensuite VS Code. Pour l’icône FBP, sélectionne `FBP File Icons` dans **Préférences : Thème d’icônes de fichiers**.
 
 Le support VS Code contient la reconnaissance des fichiers `.fbp`, la coloration syntaxique et le thème d’icônes. Il est livré dans le même dépôt et le même package npm ; aucune extension séparée à rechercher n’est nécessaire.
 
@@ -152,6 +152,11 @@ optionSalon("configurer", "salon", "Choisis un salon", true)
 ```
 
 Le dernier argument indique si l'option est obligatoire. La réponse affiche le nom du salon précédé de `#`. Cette option peut être ajoutée aux commandes texte ou aux commandes embed, comme les autres options slash.
+
+## Nouveautés de FBP 1.2.3
+
+- `fbp -init` conserve les fichiers déjà présents dans le projet et dans le dossier de l’extension VS Code.
+- La résolution des champs dynamiques `option.nom` utilise une règle de reconnaissance simplifiée.
 
 ## Limites actuelles
 
