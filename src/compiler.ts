@@ -107,7 +107,7 @@ function parseFile(file: string, source: string): Statement[] {
 }
 
 type DiscordOptionType = "texte" | "nombre" | "entier" | "booleen";
-type DiscordOption = { name: string; description: string; type: DiscordOptionType; required: boolean; choices?: Array<{ name: string; value: string | number }> };
+type DiscordOption = { name: string; description: string; type: DiscordOptionType; required: boolean; choices?: Array<{ name: string; value: string | number }>; minValue?: number; maxValue?: number };
 type DiscordResponse =
   | { type: "text"; content: string; options?: DiscordOption[] }
   | { type: "embed"; title: string; description: string; color: string; fields: Array<{ name: string; value: string; dynamic?: boolean }>; userOption?: { name: string; description: string }; options?: DiscordOption[] };
@@ -239,6 +239,8 @@ export class FbpCompiler {
                 }),
                 nombre: () => builder.addNumberOption(item => {
                   item.setName(option.name).setDescription(option.description).setRequired(option.required);
+                  if (option.minValue !== undefined) item.setMinValue(option.minValue);
+                  if (option.maxValue !== undefined) item.setMaxValue(option.maxValue);
                   for (const choice of option.choices ?? []) if (typeof choice.value === "number") item.addChoices({ name: choice.name, value: choice.value });
                   return item;
                 }),
@@ -382,6 +384,24 @@ export class FbpCompiler {
       if (choices.some(choice => choice.name === choiceName || choice.value === choiceValue)) throw new FbpError("Ce nom ou cette valeur de choix existe déjà.", undefined, line);
       if (choices.length >= 25) throw new FbpError("Une option Discord ne peut pas contenir plus de 25 choix.", undefined, line);
       choices.push({ name: choiceName, value: choiceValue as string | number });
+      return;
+    }
+    if (name === "discordOptionNombreLimites" || name === "discordOptionEntierLimites") {
+      if (values.length !== 4 || typeof values[0] !== "string" || typeof values[1] !== "string" || typeof values[2] !== "number" || typeof values[3] !== "number") {
+        throw new FbpError("Utilisation : discordOptionNombreLimites(commande, option, minimum, maximum) ou discordOptionEntierLimites(...).", undefined, line);
+      }
+      const [commandName, optionName, minimum, maximum] = values as [string, string, number, number];
+      const command = this.discordCommands.get(commandName);
+      if (!command) throw new FbpError("La commande « " + commandName + " » n'est pas déclarée.", undefined, line);
+      const expectedType: DiscordOptionType = name === "discordOptionNombreLimites" ? "nombre" : "entier";
+      const option = (command.options ?? []).find(item => item.name === optionName);
+      if (!option || option.type !== expectedType) throw new FbpError("L'option « " + optionName + " » n'existe pas ou n'a pas le type numérique attendu.", undefined, line);
+      if (!Number.isFinite(minimum) || !Number.isFinite(maximum) || minimum > maximum || (expectedType === "entier" && (!Number.isInteger(minimum) || !Number.isInteger(maximum)))) {
+        throw new FbpError("Les limites doivent être des nombres valides, minimum inférieur ou égal au maximum ; elles doivent être entières pour une option entière.", undefined, line);
+      }
+      if (option.choices?.length) throw new FbpError("Une option avec des choix prédéfinis ne peut pas recevoir de limites numériques.", undefined, line);
+      option.minValue = minimum;
+      option.maxValue = maximum;
       return;
     }
     if (name === "discordOptionTexte" || name === "discordOptionNombre" || name === "discordOptionEntier" || name === "discordOptionBooleen") {
