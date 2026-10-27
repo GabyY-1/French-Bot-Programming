@@ -25,7 +25,7 @@ Puis, dans le `package.json` de ton projet :
     "start": "fbp run lancer"
   },
   "dependencies": {
-    "fbp-language": "^1.2.3"
+    "fbp-language": "^1.2.4"
   }
 }
 ```
@@ -153,7 +153,7 @@ optionSalon("configurer", "salon", "Choisis un salon", true)
 
 Le dernier argument indique si l'option est obligatoire. La réponse affiche le nom du salon précédé de `#`. Cette option peut être ajoutée aux commandes texte ou aux commandes embed, comme les autres options slash.
 
-## Nouveautés de FBP 1.2.3
+## Nouveautés de FBP 1.2.4
 
 - `fbp -init` conserve les fichiers déjà présents dans le projet et dans le dossier de l’extension VS Code.
 - La résolution des champs dynamiques `option.nom` utilise une règle de reconnaissance simplifiée.
