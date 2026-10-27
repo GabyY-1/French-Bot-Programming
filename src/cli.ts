@@ -8,6 +8,21 @@ import { FbpError } from "./errors";
 const packagePath = path.resolve(__dirname, "../package.json");
 const VERSION: string = JSON.parse(fs.readFileSync(packagePath, "utf8")).version;
 
+function compareVersions(first: string, second: string): number {
+  const parse = (version: string) => version.replace(/^v/, "").split(/[.+-]/).map(part => {
+    const number = Number(part);
+    return Number.isFinite(number) ? number : 0;
+  });
+  const a = parse(first);
+  const b = parse(second);
+  const length = Math.max(a.length, b.length);
+  for (let i = 0; i < length; i++) {
+    const difference = (a[i] ?? 0) - (b[i] ?? 0);
+    if (difference !== 0) return difference > 0 ? 1 : -1;
+  }
+  return 0;
+}
+
 async function printVersion(): Promise<void> {
   console.log(`FBP ${VERSION}`);
   try {
@@ -18,9 +33,13 @@ async function printVersion(): Promise<void> {
     if (!response.ok) throw new Error("Registre npm indisponible.");
     const latest = await response.json() as { version?: unknown };
     if (typeof latest.version !== "string") throw new Error("Version npm invalide.");
-    console.log(`Dernière version npm : ${latest.version}`);
-    if (latest.version !== VERSION) {
-      console.log(`Mise à jour disponible : npm install -g fbp-language@latest`);
+    console.log(`Version publiée sur npm : ${latest.version}`);
+
+    const comparison = compareVersions(VERSION, latest.version);
+    if (comparison > 0) {
+      console.log("La version locale de FBP est en avance sur npm.");
+    } else if (comparison < 0) {
+      console.log("Une version plus récente est disponible sur npm : npm install -g fbp-language@latest");
     } else {
       console.log("FBP est à jour.");
     }
