@@ -1,8 +1,8 @@
 {
   "name": "fbp-language",
   "displayName": "FBP - French Bot Programming",
-  "description": "Langage FBP avec options slash Discord, sélecteurs de salon, limites numériques, choix prédéfinis et embeds dynamiques.",
-  "version": "1.1.8",
+  "description": "Langage FBP avec compilateur, commandes Discord et support VS Code.",
+  "version": "1.1.9",
   "type": "commonjs",
   "main": "dist/compiler.js",
   "bin": {
@@ -14,6 +14,7 @@
     "syntaxes/",
     "assets/",
     "themes/",
+    "vscode-extension/",
     "language-configuration.json",
     "package.json"
   ],
@@ -33,7 +34,8 @@
     "cli",
     "discord",
     "slash-commands",
-    "bot"
+    "bot",
+    "vscode-extension"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
