@@ -50,5 +50,5 @@ test("une commande inconnue renvoie une erreur claire", () => {
 test("la version du CLI est 1.1.7", () => {
   const result = run(["version"]);
   assert.equal(result.status, 0);
-  assert.match(result.stdout, /FBP 1\.1\.6/);
+  assert.match(result.stdout, /FBP 1\.1\.7/);
 });
