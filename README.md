@@ -25,7 +25,7 @@ Puis, dans le `package.json` de ton projet :
     "start": "fbp run lancer"
   },
   "dependencies": {
-    "fbp-language": "^1.2.4"
+    "fbp-language": "^1.2.6"
   }
 }
 ```
@@ -158,11 +158,16 @@ Le dernier argument indique si l'option est obligatoire. La réponse affiche le 
 - `fbp -init` conserve les fichiers déjà présents dans le projet et dans le dossier de l’extension VS Code.
 - La résolution des champs dynamiques `option.nom` utilise une règle de reconnaissance simplifiée.
 
-## Nouveautés de FBP 1.2.4
+## Nouveautés de FBP 1.2.5
 
 - `fbp version` lit automatiquement la version installée depuis `package.json`.
 - La commande consulte le registre npm pour afficher la dernière version publiée de `fbp-language`.
 - Si une version plus récente existe, elle affiche la commande de mise à jour. Si npm est inaccessible, elle affiche la version locale sans échouer.
+
+## Nouveautés de FBP 1.2.6
+
+- Correction des diagnostics de fonctions dans VS Code : une fonction n’est plus signalée à tort comme doublon dès sa première déclaration.
+- Correction de la reconnaissance des noms de fonctions Unicode dans l’analyse du document.
 
 ## Limites actuelles
 
