@@ -50,6 +50,19 @@ test("une commande inconnue renvoie une erreur claire", () => {
   assert.match(result.stderr, /Commande « commande_inexistante » inconnue/);
 });
 
+test("fbp -init installe le support VS Code quand il est absent", () => {
+  const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "fbp-init-fresh-"));
+  try {
+    const result = run(["-init"], cwd, { ...process.env, HOME: cwd, USERPROFILE: cwd, VSCODE_AGENT_FOLDER: path.join(cwd, ".vscode-agent") });
+    assert.equal(result.status, 0);
+    assert.ok(fs.existsSync(path.join(cwd, "commandes.fbp")));
+    assert.ok(fs.existsSync(path.join(cwd, "scripts", "main.fbp")));
+    assert.ok(fs.existsSync(path.join(cwd, ".vscode-agent", "extensions", "gabyy1.fbp-language-1.2.3", "package.json")));
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
 test("fbp -init conserve les fichiers du projet et une extension existante", () => {
   const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "fbp-init-"));
   const extensionDir = path.join(cwd, ".vscode-agent", "extensions", "gabyy1.fbp-language-1.2.3");
