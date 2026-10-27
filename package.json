@@ -3,7 +3,6 @@
   "displayName": "FBP - French Bot Programming",
   "description": "Interpréteur et CLI du langage FBP.",
   "version": "0.2.0",
-  "private": true,
   "type": "commonjs",
   "main": "dist/compiler.js",
   "bin": {
@@ -13,9 +12,25 @@
     "dist/",
     "README.md"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/GabyY-1/French-Bot-Programming.git"
+  },
+  "homepage": "https://github.com/GabyY-1/French-Bot-Programming#readme",
+  "bugs": {
+    "url": "https://github.com/GabyY-1/French-Bot-Programming/issues"
+  },
+  "keywords": [
+    "fbp",
+    "language",
+    "interpreter",
+    "french",
+    "cli"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "prepare": "npm run build",
+    "prepublishOnly": "npm test",
     "start": "node dist/cli.js",
     "dev": "ts-node src/cli.ts",
     "test": "npm run build && node --test tests/*.test.cjs"
