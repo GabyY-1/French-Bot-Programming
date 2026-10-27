@@ -5,7 +5,29 @@ import path from "node:path";
 import { FbpCompiler } from "./compiler";
 import { FbpError } from "./errors";
 
-const VERSION = "1.2.3";
+const packagePath = path.resolve(__dirname, "../package.json");
+const VERSION: string = JSON.parse(fs.readFileSync(packagePath, "utf8")).version;
+
+async function printVersion(): Promise<void> {
+  console.log(`FBP ${VERSION}`);
+  try {
+    const response = await fetch("https://registry.npmjs.org/fbp-language/latest", {
+      signal: AbortSignal.timeout(3000),
+      headers: { accept: "application/json" }
+    });
+    if (!response.ok) throw new Error("Registre npm indisponible.");
+    const latest = await response.json() as { version?: unknown };
+    if (typeof latest.version !== "string") throw new Error("Version npm invalide.");
+    console.log(`Dernière version npm : ${latest.version}`);
+    if (latest.version !== VERSION) {
+      console.log(`Mise à jour disponible : npm install -g fbp-language@latest`);
+    } else {
+      console.log("FBP est à jour.");
+    }
+  } catch {
+    console.log("Version npm non vérifiée (connexion indisponible).");
+  }
+}
 
 function help(): void {
   console.log(`FBP — French Bot Programming
@@ -111,7 +133,7 @@ function runCommand(name: string): void {
   new FbpCompiler().runFile(path.resolve(path.dirname(configPath), target));
 }
 
-function main(): void {
+async function main(): Promise<void> {
   const [command, ...args] = process.argv.slice(2);
   try {
     switch (command) {
@@ -124,7 +146,7 @@ function main(): void {
       case "version":
       case "--version":
       case "-v":
-        console.log(`FBP ${VERSION}`);
+        await printVersion();
         break;
       case "info":
         console.log("FBP — French Bot Programming");
@@ -161,4 +183,4 @@ function main(): void {
   }
 }
 
-main();
+void main();
