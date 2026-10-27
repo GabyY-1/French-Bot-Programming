@@ -25,7 +25,7 @@ Puis, dans le `package.json` de ton projet :
     "start": "fbp run lancer"
   },
   "dependencies": {
-    "fbp-language": "^1.1.8"
+    "fbp-language": "^1.1.9"
   }
 }
 ```
@@ -57,6 +57,18 @@ lance()
 
 Les chemins déclarés dans `commandes.fbp` sont relatifs à la racine du projet.
 
+## Initialiser un projet et installer le support VS Code
+
+Dans le dossier de ton projet, exécute :
+
+```bash
+fbp -init
+```
+
+La commande crée `commandes.fbp` et `scripts/main.fbp` sans écraser les fichiers existants. Elle installe également le support FBP fourni avec le package dans le dossier des extensions VS Code de l’utilisateur. Si tu utilises une instance distante ou un environnement sans dossier d’extensions accessible, l’installation peut nécessiter une configuration manuelle. Recharge ensuite VS Code. Pour l’icône FBP, sélectionne `FBP File Icons` dans **Préférences : Thème d’icônes de fichiers**.
+
+Le support VS Code contient la reconnaissance des fichiers `.fbp`, la coloration syntaxique et le thème d’icônes. Il est livré dans le même dépôt et le même package npm ; aucune extension séparée à rechercher n’est nécessaire.
+
 ## Commandes CLI
 
 ```bash
@@ -64,6 +76,7 @@ fbp help
 fbp version
 fbp info
 fbp ping
+fbp -init
 fbp run lancer
 fbp run-file scripts/main.fbp
 ```
@@ -237,6 +250,6 @@ discordOptionNombreLimites("note", "note", 0, 20)
 - Les limites s'appliquent à l'interface Discord. Une option avec des choix prédéfinis ne peut pas recevoir de limites.
 
 
-## Coloration syntaxique VS Code
+## Support VS Code
 
-Le dépôt contient la grammaire TextMate et la configuration du langage FBP. Le paquet déclare les fichiers `.fbp`, leur coloration syntaxique et les paires de caractères dans `package.json`. Le logo est disponible dans `assets/fbp-logo.svg`.
+Le dossier `vscode-extension/` contient le manifeste d’extension, la grammaire TextMate, la configuration de langage et le thème d’icônes FBP. La commande `fbp -init` copie ce support dans le dossier d’extensions de VS Code. Le logo du thème d’icônes se trouve dans `vscode-extension/assets/fbp-logo.svg`.
