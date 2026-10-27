@@ -73,6 +73,7 @@ function validateDocument(document, collection) {
   const lines = document.getText().split(/\r?\n/);
   const stack = [];
   const functionNames = new Set();
+  const declaredFunctions = new Set();
   for (const raw of lines) {
     const match = raw.trim().match(/^([\\p{L}_][\\p{L}\\p{N}_]*)\\s*\\(\\s*\\)\\s*\\{$/u);
     if (match) functionNames.add(match[1]);
@@ -103,8 +104,8 @@ function validateDocument(document, collection) {
 
     const fn = line.match(declaration);
     if (fn) {
-      if (functionNames.has(fn[1])) add(index, fn[1], "Cette fonction est déjà définie.");
-      functionNames.add(fn[1]);
+      if (declaredFunctions.has(fn[1])) add(index, fn[1], "Cette fonction est déjà définie.");
+      declaredFunctions.add(fn[1]);
       stack.push({ name: fn[1], line: index });
       return;
     }
