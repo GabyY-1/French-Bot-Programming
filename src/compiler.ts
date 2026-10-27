@@ -107,7 +107,7 @@ function parseFile(file: string, source: string): Statement[] {
 }
 
 type DiscordOptionType = "texte" | "nombre" | "entier" | "booleen";
-type DiscordOption = { name: string; description: string; type: DiscordOptionType; required: boolean };
+type DiscordOption = { name: string; description: string; type: DiscordOptionType; required: boolean; choices?: Array<{ name: string; value: string | number }> };
 type DiscordResponse =
   | { type: "text"; content: string; options?: DiscordOption[] }
   | { type: "embed"; title: string; description: string; color: string; fields: Array<{ name: string; value: string; dynamic?: boolean }>; userOption?: { name: string; description: string }; options?: DiscordOption[] };
@@ -232,9 +232,21 @@ export class FbpCompiler {
             }
             for (const option of response.options ?? []) {
               const add = {
-                texte: () => builder.addStringOption(item => item.setName(option.name).setDescription(option.description).setRequired(option.required)),
-                nombre: () => builder.addNumberOption(item => item.setName(option.name).setDescription(option.description).setRequired(option.required)),
-                entier: () => builder.addIntegerOption(item => item.setName(option.name).setDescription(option.description).setRequired(option.required)),
+                texte: () => builder.addStringOption(item => {
+                  item.setName(option.name).setDescription(option.description).setRequired(option.required);
+                  for (const choice of option.choices ?? []) if (typeof choice.value === "string") item.addChoices({ name: choice.name, value: choice.value });
+                  return item;
+                }),
+                nombre: () => builder.addNumberOption(item => {
+                  item.setName(option.name).setDescription(option.description).setRequired(option.required);
+                  for (const choice of option.choices ?? []) if (typeof choice.value === "number") item.addChoices({ name: choice.name, value: choice.value });
+                  return item;
+                }),
+                entier: () => builder.addIntegerOption(item => {
+                  item.setName(option.name).setDescription(option.description).setRequired(option.required);
+                  for (const choice of option.choices ?? []) if (typeof choice.value === "number") item.addChoices({ name: choice.name, value: choice.value });
+                  return item;
+                }),
                 booleen: () => builder.addBooleanOption(item => item.setName(option.name).setDescription(option.description).setRequired(option.required))
               }[option.type];
               add();
@@ -348,6 +360,28 @@ export class FbpCompiler {
       if (command.fields.length >= 25) throw new FbpError("Un embed Discord ne peut pas contenir plus de 25 champs.", undefined, line);
       if (!fieldName.trim() || !source.trim() || fieldName.length > 256 || source.length > 1024) throw new FbpError("Un champ dynamique doit avoir un nom et une source valides.", undefined, line);
       command.fields.push({ name: fieldName, value: source, dynamic: true });
+      return;
+    }
+    if (name === "discordChoixTexte" || name === "discordChoixEntier") {
+      if (values.length !== 4 || values.some(value => typeof value !== "string" && typeof value !== "number")) {
+        throw new FbpError("Utilisation : discordChoixTexte(nomCommande, nomOption, nomChoix, valeur) ou discordChoixEntier(...).", undefined, line);
+      }
+      const [commandName, optionName, choiceName, choiceValue] = values;
+      if (typeof commandName !== "string" || typeof optionName !== "string" || typeof choiceName !== "string") {
+        throw new FbpError("Le nom de la commande, de l'option et du choix doivent être du texte.", undefined, line);
+      }
+      const command = this.discordCommands.get(commandName);
+      if (!command) throw new FbpError("La commande « " + commandName + " » n'est pas déclarée.", undefined, line);
+      const option = (command.options ?? []).find(item => item.name === optionName);
+      const expectedType: DiscordOptionType = name === "discordChoixTexte" ? "texte" : "entier";
+      if (!option || option.type !== expectedType) throw new FbpError("L'option « " + optionName + " » n'existe pas ou n'a pas le bon type.", undefined, line);
+      if (!choiceName.trim() || choiceName.length > 100) throw new FbpError("Le nom d'un choix doit contenir de 1 à 100 caractères.", undefined, line);
+      if (expectedType === "texte" && typeof choiceValue !== "string") throw new FbpError("La valeur d'un choix texte doit être du texte.", undefined, line);
+      if (expectedType === "entier" && (typeof choiceValue !== "number" || !Number.isInteger(choiceValue))) throw new FbpError("La valeur d'un choix entier doit être un nombre entier.", undefined, line);
+      const choices = option.choices ?? (option.choices = []);
+      if (choices.some(choice => choice.name === choiceName || choice.value === choiceValue)) throw new FbpError("Ce nom ou cette valeur de choix existe déjà.", undefined, line);
+      if (choices.length >= 25) throw new FbpError("Une option Discord ne peut pas contenir plus de 25 choix.", undefined, line);
+      choices.push({ name: choiceName, value: choiceValue as string | number });
       return;
     }
     if (name === "discordOptionTexte" || name === "discordOptionNombre" || name === "discordOptionEntier" || name === "discordOptionBooleen") {
