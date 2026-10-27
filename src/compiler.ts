@@ -108,7 +108,7 @@ function parseFile(file: string, source: string): Statement[] {
 
 type DiscordResponse =
   | { type: "text"; content: string }
-  | { type: "embed"; title: string; description: string; color: string; fields: Array<{ name: string; value: string }> };
+  | { type: "embed"; title: string; description: string; color: string; fields: Array<{ name: string; value: string; dynamic?: boolean }>; userOption?: { name: string; description: string } };
 
 export class FbpCompiler {
   private variables = new Map<string, { type: ValueType; value: unknown }>();
@@ -120,6 +120,32 @@ export class FbpCompiler {
 
   constructor(options: RunOptions = {}) {
     this.output = options.onOutput ?? (value => console.log(value));
+  }
+
+  private resolveDiscordValue(
+    source: string,
+    interaction: import("discord.js").ChatInputCommandInteraction,
+    selectedUser: import("discord.js").User | null,
+    selectedMember: import("discord.js").GuildMember | null
+  ): string {
+    const guild = interaction.guild;
+    const values: Record<string, string> = {
+      "discordServeur.nom": guild?.name ?? "Serveur indisponible",
+      "discordServeur.id": guild?.id ?? "Indisponible",
+      "discordServeur.creation": guild ? "<t:" + Math.floor(guild.createdTimestamp / 1000) + ":D>" : "Indisponible",
+      "discordMembres.nombre": guild ? String(guild.memberCount) : "Indisponible",
+      "discordProfil.nom": selectedMember?.displayName ?? selectedUser?.username ?? "Sélectionne un membre",
+      "discordProfil.id": selectedUser?.id ?? "Sélectionne un membre",
+      "discordProfil.avatar": selectedUser?.displayAvatarURL({ size: 256 }) ?? "Sélectionne un membre",
+      "discordRoles.nombre": guild ? String(guild.roles.cache.size) : "Indisponible",
+      "discordSalons.nombre": guild ? String(guild.channels.cache.size) : "Indisponible",
+      "discordStatistiques.membres": guild ? String(guild.memberCount) : "Indisponible",
+      "discordStatistiques.roles": guild ? String(guild.roles.cache.size) : "Indisponible",
+      "discordStatistiques.salons": guild ? String(guild.channels.cache.size) : "Indisponible",
+      "discordLatence": String(Math.max(0, Math.round(interaction.client.ws.ping))) + " ms",
+      "discordAvatar": selectedUser?.displayAvatarURL({ size: 256 }) ?? interaction.user.displayAvatarURL({ size: 256 })
+    };
+    return source.trim() in values ? values[source.trim()] : "Source inconnue : " + source.trim();
   }
 
   runFile(filePath: string): void {
@@ -188,12 +214,19 @@ export class FbpCompiler {
 
       client.once("ready", async () => {
         try {
-          const commands = [...this.discordCommands.entries()].map(([commandName]) =>
-            new SlashCommandBuilder()
+          const commands = [...this.discordCommands.entries()].map(([commandName, response]) => {
+            const builder = new SlashCommandBuilder()
               .setName(commandName)
-              .setDescription(`Commande ${commandName} du bot FBP`)
-              .toJSON()
-          );
+              .setDescription(`Commande ${commandName} du bot FBP`);
+            if (response.type === "embed" && response.userOption) {
+              builder.addUserOption(option =>
+                option.setName(response.userOption!.name)
+                  .setDescription(response.userOption!.description)
+                  .setRequired(false)
+              );
+            }
+            return builder.toJSON();
+          });
           const manager = client.application?.commands;
           if (!manager) throw new Error("L'application Discord n'est pas disponible.");
           const existing = await manager.fetch();
@@ -221,7 +254,15 @@ export class FbpCompiler {
               .setTitle(response.title)
               .setDescription(response.description)
               .setColor(Number.parseInt(response.color.slice(1), 16));
-            if (response.fields.length) embed.addFields(response.fields.map(field => ({ name: field.name, value: field.value, inline: false })));
+            const guild = interaction.guild;
+            const selectedUser = response.userOption ? interaction.options.getUser(response.userOption.name) : null;
+            const selectedMember = selectedUser && guild ? await guild.members.fetch(selectedUser.id).catch(() => null) : null;
+            const fields = response.fields.map(field => ({
+              name: field.name,
+              value: field.dynamic ? this.resolveDiscordValue(field.value, interaction, selectedUser, selectedMember) : field.value,
+              inline: false
+            }));
+            if (fields.length) embed.addFields(fields);
             await interaction.reply({ embeds: [embed] });
           }
         } catch (error: unknown) {
@@ -253,6 +294,30 @@ export class FbpCompiler {
       if (!/^[a-z0-9_-]{1,32}$/.test(commandName)) throw new FbpError("Le nom d'une commande slash doit contenir 1 à 32 caractères : lettres minuscules, chiffres, tirets ou underscores.", undefined, line);
       if (!/^#[0-9a-fA-F]{6}$/.test(color)) throw new FbpError("La couleur d'un embed doit être au format hexadécimal, par exemple #5865F2.", undefined, line);
       this.discordCommands.set(commandName, { type: "embed", title, description, color, fields: [] });
+      return;
+    }
+    if (name === "discordChampDynamique") {
+      if (values.length !== 3 || values.some(value => typeof value !== "string")) {
+        throw new FbpError("Utilisation : discordChampDynamique(nomCommande, nomChamp, source).", undefined, line);
+      }
+      const [commandName, fieldName, source] = values as string[];
+      const command = this.discordCommands.get(commandName);
+      if (!command || command.type !== "embed") throw new FbpError("La commande « " + commandName + " » n'est pas un embed déclaré.", undefined, line);
+      if (command.fields.length >= 25) throw new FbpError("Un embed Discord ne peut pas contenir plus de 25 champs.", undefined, line);
+      if (!fieldName.trim() || !source.trim() || fieldName.length > 256 || source.length > 1024) throw new FbpError("Un champ dynamique doit avoir un nom et une source valides.", undefined, line);
+      command.fields.push({ name: fieldName, value: source, dynamic: true });
+      return;
+    }
+    if (name === "discordOptionUtilisateur") {
+      if (values.length !== 3 || values.some(value => typeof value !== "string")) {
+        throw new FbpError("Utilisation : discordOptionUtilisateur(nomCommande, nomOption, description).", undefined, line);
+      }
+      const [commandName, optionName, description] = values as string[];
+      const command = this.discordCommands.get(commandName);
+      if (!command || command.type !== "embed") throw new FbpError("La commande « " + commandName + " » n'est pas un embed déclaré.", undefined, line);
+      if (!/^[a-z0-9_-]{1,32}$/.test(optionName)) throw new FbpError("Le nom de l'option doit contenir 1 à 32 caractères minuscules, chiffres, tirets ou underscores.", undefined, line);
+      if (!description.trim() || description.length > 100) throw new FbpError("La description de l'option doit contenir 1 à 100 caractères.", undefined, line);
+      command.userOption = { name: optionName, description };
       return;
     }
     if (name === "discordChamp") {

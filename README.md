@@ -23,7 +23,7 @@ Puis, dans le `package.json` de ton projet :
     "start": "fbp run lancer"
   },
   "dependencies": {
-    "fbp-language": "^1.1.3"
+    "fbp-language": "^1.1.4"
   }
 }
 ```
@@ -127,3 +127,25 @@ npm test
 ```
 
 Les fichiers d'essai internes se trouvent dans `tests/fixtures`. Ils ne font pas partie du paquet publié.
+
+
+## Informations Discord dynamiques (v1.1.4)
+
+Les champs d'un embed peuvent récupérer les informations accessibles au moment où la commande est utilisée. Exemple :
+
+```fbp
+discordConnexion()
+discordCommandeEmbed("serveur-info", "Informations du serveur", "Données actuelles", "#5865F2")
+discordChampDynamique("serveur-info", "Nom", "discordServeur.nom")
+discordChampDynamique("serveur-info", "Identifiant", "discordServeur.id")
+discordChampDynamique("serveur-info", "Création", "discordServeur.creation")
+discordChampDynamique("serveur-info", "Membres", "discordMembres.nombre")
+discordChampDynamique("serveur-info", "Rôles", "discordRoles.nombre")
+discordChampDynamique("serveur-info", "Salons", "discordSalons.nombre")
+discordChampDynamique("serveur-info", "Latence", "discordLatence")
+discordOptionUtilisateur("serveur-info", "membre", "Membre à afficher")
+discordChampDynamique("serveur-info", "Profil", "discordProfil.nom")
+discordChampDynamique("serveur-info", "Avatar", "discordAvatar")
+```
+
+Sources disponibles : `discordServeur.nom`, `discordServeur.id`, `discordServeur.creation`, `discordMembres.nombre`, `discordProfil.nom`, `discordProfil.id`, `discordProfil.avatar`, `discordRoles.nombre`, `discordSalons.nombre`, `discordStatistiques.membres`, `discordStatistiques.roles`, `discordStatistiques.salons`, `discordLatence` et `discordAvatar`. `discordOptionUtilisateur(nomCommande, nomOption, description)` ajoute un sélecteur facultatif de membre à une commande embed. Les données accessibles dépendent des permissions et du cache Discord du bot.
