@@ -23,7 +23,7 @@ Puis, dans le `package.json` de ton projet :
     "start": "fbp run lancer"
   },
   "dependencies": {
-    "fbp-language": "^1.1.1"
+    "fbp-language": "^1.1.2"
   }
 }
 ```
@@ -104,17 +104,17 @@ Dans `scripts/main.fbp` :
 
 ```fbp
 discordConnexion()
-discordCommande("!ping", "Pong !")
-discordCommande("!bonjour", "Salut !")
+discordCommande("ping", "Pong !")
+discordCommande("bonjour", "Salut !")
 ```
 
-Associe `lancer` à `scripts/main.fbp` dans `commandes.fbp`, puis exécute `npx fbp run lancer`. Dans le portail développeur Discord, active **Message Content Intent**.
+Associe `lancer` à `scripts/main.fbp` dans `commandes.fbp`, puis exécute `npx fbp run lancer`. Dans le portail développeur Discord, vérifie que le bot est invité sur ton serveur avec les scopes `bot` et `applications.commands`. Seul l'intent serveur (`Guilds`) est nécessaire.
 
-Les commandes texte exactes sont prises en charge pour l'instant. Les commandes slash ne le sont pas encore.
+FBP enregistre les commandes déclarées comme commandes slash globales de l'application Discord. Leur apparition peut prendre un peu de temps après le premier enregistrement. Les noms doivent contenir de 1 à 32 caractères parmi les lettres minuscules, chiffres, tirets et underscores.
 
 ## Limites actuelles
 
-FBP est encore un interpréteur de base. Les paramètres de fonction, les conditions, les boucles, les valeurs de retour et les expressions arithmétiques ne sont pas encore implémentés. La connexion Discord utilise un token stocké dans `.env`. Les commandes slash, les paramètres et les conditions ne sont pas encore implémentés.
+FBP est encore un interpréteur de base. Les paramètres de fonction, les conditions, les boucles, les valeurs de retour et les expressions arithmétiques ne sont pas encore implémentés. La connexion Discord utilise un token stocké dans `.env`. Les commandes slash répondent avec un texte fixe ; les options, paramètres, permissions avancées et conditions ne sont pas encore implémentés.
 
 ## Développement du dépôt
 
