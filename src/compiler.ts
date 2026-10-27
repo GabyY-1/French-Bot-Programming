@@ -109,7 +109,7 @@ function parseFile(file: string, source: string): Statement[] {
 type DiscordOptionType = "texte" | "nombre" | "entier" | "booleen" | "salon";
 type DiscordOption = { name: string; description: string; type: DiscordOptionType; required: boolean; choices?: Array<{ name: string; value: string | number }>; minValue?: number; maxValue?: number };
 type DiscordResponse =
-  | { type: "text"; content: string; options?: DiscordOption[] }
+  | { type: "text"; content: string; ephemeral?: boolean; options?: DiscordOption[] }
   | { type: "embed"; title: string; description: string; color: string; fields: Array<{ name: string; value: string; dynamic?: boolean }>; userOption?: { name: string; description: string }; options?: DiscordOption[] };
 
 export class FbpCompiler {
@@ -305,7 +305,7 @@ export class FbpCompiler {
             const content = response.content.replace(/\{\{([a-z0-9_-]{1,32})\}\}/g, (match, name: string) =>
               optionValues.has(name) ? optionValues.get(name)! : match
             );
-            await interaction.reply(content);
+            await interaction.reply({ content, ephemeral: response.ephemeral ?? false });
           } else {
             const embed = new EmbedBuilder()
               .setTitle(response.title)
@@ -345,6 +345,16 @@ export class FbpCompiler {
         throw new FbpError("Le nom d'une commande slash doit contenir 1 à 32 caractères : lettres minuscules, chiffres, tirets ou underscores.", undefined, line);
       }
       this.discordCommands.set(commandName, { type: "text", content: values[1], options: [] });
+      return;
+    }
+    if (name === "discordCommandePrivee") {
+      if (!this.discordClient) throw new FbpError("Appelle discordConnexion() avant de déclarer une commande.", undefined, line);
+      if (values.length !== 2 || typeof values[0] !== "string" || typeof values[1] !== "string") {
+        throw new FbpError("Utilisation : discordCommandePrivee(\"nom\", \"réponse visible uniquement par l'utilisateur\").", undefined, line);
+      }
+      const [commandName, response] = values as string[];
+      if (!/^[a-z0-9_-]{1,32}$/.test(commandName)) throw new FbpError("Le nom d'une commande slash doit contenir 1 à 32 caractères : lettres minuscules, chiffres, tirets ou underscores.", undefined, line);
+      this.discordCommands.set(commandName, { type: "text", content: response, ephemeral: true, options: [] });
       return;
     }
     if (name === "discordCommandeEmbed") {
