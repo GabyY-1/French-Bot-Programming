@@ -2,15 +2,18 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const { spawnSync } = require("node:child_process");
 const path = require("node:path");
+const fs = require("node:fs");
+const os = require("node:os");
 
 const root = path.resolve(__dirname, "..");
 const cli = path.join(root, "dist", "cli.js");
 const fixtures = path.join(__dirname, "fixtures");
 
-function run(args, cwd = root) {
+function run(args, cwd = root, env = process.env) {
   return spawnSync(process.execPath, [cli, ...args], {
     cwd,
-    encoding: "utf8"
+    encoding: "utf8",
+    env
   });
 }
 
@@ -47,8 +50,21 @@ test("une commande inconnue renvoie une erreur claire", () => {
   assert.match(result.stderr, /Commande « commande_inexistante » inconnue/);
 });
 
-test("la version du CLI est 1.1.8", () => {
+test("fbp -init crée les fichiers sans écraser les fichiers existants", () => {
+  const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "fbp-init-"));
+  try {
+    const result = run(["-init"], cwd, { ...process.env, HOME: cwd, USERPROFILE: cwd, VSCODE_AGENT_FOLDER: path.join(cwd, ".vscode-agent") });
+    assert.equal(result.status, 0);
+    assert.ok(fs.existsSync(path.join(cwd, "commandes.fbp")));
+    assert.ok(fs.existsSync(path.join(cwd, "scripts", "main.fbp")));
+    assert.ok(fs.existsSync(path.join(cwd, ".vscode-agent", "extensions", "gabyy1.fbp-language-1.1.9", "package.json")));
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test("la version du CLI est 1.1.9", () => {
   const result = run(["version"]);
   assert.equal(result.status, 0);
-  assert.match(result.stdout, /FBP 1\.1\.8/);
+  assert.match(result.stdout, /FBP 1\.1\.9/);
 });
