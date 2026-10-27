@@ -1,15 +1,6 @@
 {
-  "name": "FBP Dark",
+  "name": "FBP Colors",
   "type": "dark",
-  "colors": {
-    "editor.background": "#17191F",
-    "editor.foreground": "#E6E8EF",
-    "editorLineNumber.foreground": "#626A7A",
-    "editorLineNumber.activeForeground": "#C6CBD8",
-    "editorCursor.foreground": "#F4B860",
-    "editor.selectionBackground": "#343B50",
-    "editor.inactiveSelectionBackground": "#292F40"
-  },
   "tokenColors": [
     {
       "scope": [
