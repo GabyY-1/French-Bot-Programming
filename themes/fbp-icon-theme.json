@@ -1,0 +1,11 @@
+{
+  "$schema": "vscode://schemas/icon-theme",
+  "iconDefinitions": {
+    "_fbp": {
+      "iconPath": "../assets/fbp-logo.svg"
+    }
+  },
+  "fileExtensions": {
+    "fbp": "_fbp"
+  }
+}
