@@ -5,11 +5,17 @@
   "version": "0.2.0",
   "private": true,
   "type": "commonjs",
+  "main": "dist/compiler.js",
   "bin": {
     "fbp": "dist/cli.js"
   },
+  "files": [
+    "dist/",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "prepare": "npm run build",
     "start": "node dist/cli.js",
     "dev": "ts-node src/cli.ts",
     "test": "npm run build && node --test tests/*.test.cjs"
