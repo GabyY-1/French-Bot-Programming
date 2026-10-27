@@ -3,21 +3,21 @@ const vscode = require("vscode");
 const builtins = [
   ["affiche", "Affiche une ou plusieurs valeurs dans le terminal."],
   ["ping", "Vérifie que le moteur FBP répond."],
-  ["discordConnexion", "Connecte le bot à Discord."],
-  ["discordCommande", "Déclare une commande slash avec une réponse texte."],
-  ["discordCommandeEmbed", "Déclare une commande slash avec un embed."],
-  ["discordChamp", "Ajoute un champ fixe à un embed."],
-  ["discordChampDynamique", "Ajoute un champ alimenté par une source Discord."],
-  ["discordOptionTexte", "Ajoute une option texte à une commande slash."],
-  ["discordOptionNombre", "Ajoute une option numérique."],
-  ["discordOptionEntier", "Ajoute une option entière."],
-  ["discordOptionBooleen", "Ajoute une option vrai/faux."],
-  ["discordOptionSalon", "Ajoute un sélecteur de salon."],
-  ["discordOptionUtilisateur", "Ajoute un sélecteur de membre à un embed."],
-  ["discordChoixTexte", "Ajoute un choix à une option texte."],
-  ["discordChoixEntier", "Ajoute un choix à une option entière."],
-  ["discordOptionNombreLimites", "Définit les limites d'une option numérique."],
-  ["discordOptionEntierLimites", "Définit les limites d'une option entière."]
+  ["connexion", "Connecte le bot à Discord."],
+  ["commande", "Déclare une commande slash avec une réponse texte."],
+  ["commandeEmbed", "Déclare une commande slash avec un embed."],
+  ["champ", "Ajoute un champ fixe à un embed."],
+  ["champDynamique", "Ajoute un champ alimenté par une source Discord."],
+  ["optionTexte", "Ajoute une option texte à une commande slash."],
+  ["optionNombre", "Ajoute une option numérique."],
+  ["optionEntier", "Ajoute une option entière."],
+  ["optionBooleen", "Ajoute une option vrai/faux."],
+  ["optionSalon", "Ajoute un sélecteur de salon."],
+  ["optionUtilisateur", "Ajoute un sélecteur de membre à un embed."],
+  ["choixTexte", "Ajoute un choix à une option texte."],
+  ["choixEntier", "Ajoute un choix à une option entière."],
+  ["optionNombreLimites", "Définit les limites d'une option numérique."],
+  ["optionEntierLimites", "Définit les limites d'une option entière."]
 ];
 
 const keywords = [
