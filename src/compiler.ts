@@ -148,7 +148,8 @@ export class FbpCompiler {
       "discordLatence": String(Math.max(0, Math.round(interaction.client.ws.ping))) + " ms",
       "discordAvatar": selectedUser?.displayAvatarURL({ size: 256 }) ?? interaction.user.displayAvatarURL({ size: 256 })
     };
-    const optionMatch = source.trim().match(/^(?:discordOption|option)\\.([a-z0-9_-]{1,32})$/);\n    if (optionMatch) return optionValues.get(optionMatch[1]) ?? "Option indisponible : " + optionMatch[1];
+    const optionMatch = source.trim().match(/^(?:discordOption|option)\.([a-z0-9_-]{1,32})$/);
+    if (optionMatch) return optionValues.get(optionMatch[1]) ?? "Option indisponible : " + optionMatch[1];
     return source.trim() in values ? values[source.trim()] : "Source inconnue : " + source.trim();
   }
 
