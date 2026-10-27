@@ -87,11 +87,11 @@ fbp run-file scripts/main.fbp
 
 ## Réponses privées Discord (v1.2.1)
 
-Pour envoyer une réponse slash visible uniquement par la personne qui utilise la commande, utilise `discordCommandePrivee` :
+Pour envoyer une réponse slash visible uniquement par la personne qui utilise la commande, utilise `commandePrivee` :
 
 ```fbp
-discordConnexion()
-discordCommandePrivee("profil", "Ces informations sont visibles uniquement par toi.")
+connexion()
+commandePrivee("profil", "Ces informations sont visibles uniquement par toi.")
 ```
 
 La fonction prend le nom de la commande puis le texte de réponse. La commande reste une commande slash Discord classique, mais sa réponse est éphémère et n’est visible que par l’utilisateur qui l’a déclenchée.
@@ -129,12 +129,12 @@ Ne partage jamais ce fichier et ajoute `.env` à `.gitignore`.
 Dans `scripts/main.fbp` :
 
 ```fbp
-discordConnexion()
-discordCommande("ping", "Pong !")
-discordCommande("bonjour", "Salut !")
-discordCommandeEmbed("serveur-info", "Informations du serveur", "Voici les informations disponibles.", "#5865F2")
-discordChamp("serveur-info", "Nom", "Mon serveur")
-discordChamp("serveur-info", "Membres", "42")
+connexion()
+commande("ping", "Pong !")
+commande("bonjour", "Salut !")
+commandeEmbed("serveur-info", "Informations du serveur", "Voici les informations disponibles.", "#5865F2")
+champ("serveur-info", "Nom", "Mon serveur")
+champ("serveur-info", "Membres", "42")
 ```
 
 Associe `lancer` à `scripts/main.fbp` dans `commandes.fbp`, puis exécute `npx fbp run lancer`. Dans le portail développeur Discord, vérifie que le bot est invité sur ton serveur avec les scopes `bot` et `applications.commands`. Seul l'intent serveur (`Guilds`) est nécessaire.
@@ -146,16 +146,16 @@ FBP enregistre les commandes déclarées comme commandes slash globales de l'app
 Une commande slash peut proposer un sélecteur de salon Discord. La valeur choisie est réutilisable dans la réponse avec `{{salon}}` :
 
 ```fbp
-discordConnexion()
-discordCommande("configurer", "Salon sélectionné : {{salon}}")
-discordOptionSalon("configurer", "salon", "Choisis un salon", true)
+connexion()
+commande("configurer", "Salon sélectionné : {{salon}}")
+optionSalon("configurer", "salon", "Choisis un salon", true)
 ```
 
 Le dernier argument indique si l'option est obligatoire. La réponse affiche le nom du salon précédé de `#`. Cette option peut être ajoutée aux commandes texte ou aux commandes embed, comme les autres options slash.
 
 ## Limites actuelles
 
-FBP est encore un interpréteur de base. Les paramètres de fonction, les conditions, les boucles, les valeurs de retour et les expressions arithmétiques ne sont pas encore implémentés. La connexion Discord utilise un token stocké dans `.env`. Les commandes slash peuvent répondre avec un texte fixe ou un embed défini avec `discordCommandeEmbed(nom, titre, description, couleur)`. Ajoute des champs avec `discordChamp(nomCommande, nomChamp, valeur)`. Les valeurs des embeds sont actuellement fixes : la récupération dynamique des informations du serveur, les options, paramètres, permissions avancées et conditions ne sont pas encore implémentés.
+FBP est encore un interpréteur de base. Les paramètres de fonction, les conditions, les boucles, les valeurs de retour et les expressions arithmétiques ne sont pas encore implémentés. La connexion Discord utilise un token stocké dans `.env`. Les commandes slash peuvent répondre avec un texte fixe ou un embed défini avec `commandeEmbed(nom, titre, description, couleur)`. Ajoute des champs avec `champ(nomCommande, nomChamp, valeur)`. Les valeurs des embeds sont actuellement fixes : la récupération dynamique des informations du serveur, les options, paramètres, permissions avancées et conditions ne sont pas encore implémentés.
 
 ## Développement du dépôt
 
@@ -172,21 +172,21 @@ Les fichiers d'essai internes se trouvent dans `tests/fixtures`. Ils ne font pas
 Les champs d'un embed peuvent récupérer les informations accessibles au moment où la commande est utilisée. Exemple :
 
 ```fbp
-discordConnexion()
-discordCommandeEmbed("serveur-info", "Informations du serveur", "Données actuelles", "#5865F2")
-discordChampDynamique("serveur-info", "Nom", "discordServeur.nom")
-discordChampDynamique("serveur-info", "Identifiant", "discordServeur.id")
-discordChampDynamique("serveur-info", "Création", "discordServeur.creation")
-discordChampDynamique("serveur-info", "Membres", "discordMembres.nombre")
-discordChampDynamique("serveur-info", "Rôles", "discordRoles.nombre")
-discordChampDynamique("serveur-info", "Salons", "discordSalons.nombre")
-discordChampDynamique("serveur-info", "Latence", "discordLatence")
-discordOptionUtilisateur("serveur-info", "membre", "Membre à afficher")
-discordChampDynamique("serveur-info", "Profil", "discordProfil.nom")
-discordChampDynamique("serveur-info", "Avatar", "discordAvatar")
+connexion()
+commandeEmbed("serveur-info", "Informations du serveur", "Données actuelles", "#5865F2")
+champDynamique("serveur-info", "Nom", "serveur.nom")
+champDynamique("serveur-info", "Identifiant", "serveur.id")
+champDynamique("serveur-info", "Création", "serveur.creation")
+champDynamique("serveur-info", "Membres", "membres.nombre")
+champDynamique("serveur-info", "Rôles", "roles.nombre")
+champDynamique("serveur-info", "Salons", "salons.nombre")
+champDynamique("serveur-info", "Latence", "latence")
+optionUtilisateur("serveur-info", "membre", "Membre à afficher")
+champDynamique("serveur-info", "Profil", "profil.nom")
+champDynamique("serveur-info", "Avatar", "avatar")
 ```
 
-Sources disponibles : `discordServeur.nom`, `discordServeur.id`, `discordServeur.creation`, `discordMembres.nombre`, `discordProfil.nom`, `discordProfil.id`, `discordProfil.avatar`, `discordRoles.nombre`, `discordSalons.nombre`, `discordStatistiques.membres`, `discordStatistiques.roles`, `discordStatistiques.salons`, `discordLatence` et `discordAvatar`. `discordOptionUtilisateur(nomCommande, nomOption, description)` ajoute un sélecteur facultatif de membre à une commande embed. Les données accessibles dépendent des permissions et du cache Discord du bot.
+Sources disponibles : `serveur.nom`, `serveur.id`, `serveur.creation`, `membres.nombre`, `profil.nom`, `profil.id`, `profil.avatar`, `roles.nombre`, `salons.nombre`, `statistiques.membres`, `statistiques.roles`, `statistiques.salons`, `latence` et `avatar`. `optionUtilisateur(nomCommande, nomOption, description)` ajoute un sélecteur facultatif de membre à une commande embed. Les données accessibles dépendent des permissions et du cache Discord du bot.
 
 
 ## Options des commandes slash (v1.1.6)
@@ -194,23 +194,23 @@ Sources disponibles : `discordServeur.nom`, `discordServeur.id`, `discordServeur
 Les commandes slash peuvent maintenant recevoir des options texte, nombre, entier ou booléen. Le dernier argument indique si l'option est obligatoire ; il est facultatif et vaut `false` par défaut.
 
 ```fbp
-discordConnexion()
-discordCommande("bonjour", "Salut {{prenom}} !")
-discordOptionTexte("bonjour", "prenom", "Ton prénom", true)
-discordOptionEntier("bonjour", "age", "Ton âge")
-discordOptionNombre("bonjour", "note", "Une valeur décimale")
-discordOptionBooleen("bonjour", "confirme", "Confirmer ?")
+connexion()
+commande("bonjour", "Salut {{prenom}} !")
+optionTexte("bonjour", "prenom", "Ton prénom", true)
+optionEntier("bonjour", "age", "Ton âge")
+optionNombre("bonjour", "note", "Une valeur décimale")
+optionBooleen("bonjour", "confirme", "Confirmer ?")
 ```
 
-Dans une réponse texte, `{{prenom}}` est remplacé par la valeur saisie. Pour les embeds, les champs dynamiques peuvent lire une option avec `discordChampDynamique("commande", "Champ", "option.prenom")` (ou `discordOption.prenom`). Les options absentes ne sont pas remplacées et une option obligatoire inaccessible produit une réponse d'erreur.
+Dans une réponse texte, `{{prenom}}` est remplacé par la valeur saisie. Pour les embeds, les champs dynamiques peuvent lire une option avec `champDynamique("commande", "Champ", "option.prenom")` (ou `option.prenom`). Les options absentes ne sont pas remplacées et une option obligatoire inaccessible produit une réponse d'erreur.
 
 Fonctions disponibles :
 
-- `discordOptionTexte(commande, nom, description, obligatoire)`
-- `discordOptionNombre(commande, nom, description, obligatoire)`
-- `discordOptionEntier(commande, nom, description, obligatoire)`
-- `discordOptionBooleen(commande, nom, description, obligatoire)`
-- `discordOptionUtilisateur(commande, nom, description)` pour le sélecteur de membre existant des commandes embed.
+- `optionTexte(commande, nom, description, obligatoire)`
+- `optionNombre(commande, nom, description, obligatoire)`
+- `optionEntier(commande, nom, description, obligatoire)`
+- `optionBooleen(commande, nom, description, obligatoire)`
+- `optionUtilisateur(commande, nom, description)` pour le sélecteur de membre existant des commandes embed.
 
 Les noms d'options doivent respecter les règles Discord (minuscules, chiffres, tirets et underscores, 1 à 32 caractères). Une commande peut avoir jusqu'à 25 options. Les types d'options sont déclarés lors de l'enregistrement des commandes ; redémarre le bot après avoir modifié leur définition. Le bot a besoin du scope `applications.commands` et de l'accès au serveur concerné. Aucun intent privilégié supplémentaire n'est requis pour ces options.
 
@@ -220,21 +220,21 @@ Les noms d'options doivent respecter les règles Discord (minuscules, chiffres, 
 Pour limiter les réponses possibles d'une option, ajoute des choix après avoir déclaré l'option :
 
 ```fbp
-discordConnexion()
-discordCommande("couleur", "Couleur choisie : {{couleur}}")
-discordOptionTexte("couleur", "couleur", "Choisis une couleur", true)
-discordChoixTexte("couleur", "couleur", "Bleu", "bleu")
-discordChoixTexte("couleur", "couleur", "Rouge", "rouge")
+connexion()
+commande("couleur", "Couleur choisie : {{couleur}}")
+optionTexte("couleur", "couleur", "Choisis une couleur", true)
+choixTexte("couleur", "couleur", "Bleu", "bleu")
+choixTexte("couleur", "couleur", "Rouge", "rouge")
 
-discordCommande("difficulte", "Niveau choisi : {{niveau}}")
-discordOptionEntier("difficulte", "niveau", "Choisis un niveau", true)
-discordChoixEntier("difficulte", "niveau", "Facile", 1)
-discordChoixEntier("difficulte", "niveau", "Normal", 2)
-discordChoixEntier("difficulte", "niveau", "Difficile", 3)
+commande("difficulte", "Niveau choisi : {{niveau}}")
+optionEntier("difficulte", "niveau", "Choisis un niveau", true)
+choixEntier("difficulte", "niveau", "Facile", 1)
+choixEntier("difficulte", "niveau", "Normal", 2)
+choixEntier("difficulte", "niveau", "Difficile", 3)
 ```
 
-- `discordChoixTexte(commande, option, nomChoix, valeur)` ajoute un choix à une option texte.
-- `discordChoixEntier(commande, option, nomChoix, valeur)` ajoute un choix à une option entière.
+- `choixTexte(commande, option, nomChoix, valeur)` ajoute un choix à une option texte.
+- `choixEntier(commande, option, nomChoix, valeur)` ajoute un choix à une option entière.
 - Déclare toujours l'option avant ses choix.
 - Une option peut avoir jusqu'à 25 choix. Les noms de choix sont limités à 100 caractères.
 - Les choix sont présentés par Discord sous forme de liste et la valeur choisie est récupérable comme les autres options.
@@ -245,18 +245,18 @@ discordChoixEntier("difficulte", "niveau", "Difficile", 3)
 Les options slash de type nombre et entier peuvent imposer une valeur minimale et maximale. Déclare l'option d'abord, puis ses limites :
 
 ```fbp
-discordConnexion()
-discordCommande("age", "Âge sélectionné : {{age}}")
-discordOptionEntier("age", "age", "Choisis un âge", true)
-discordOptionEntierLimites("age", "age", 13, 99)
+connexion()
+commande("age", "Âge sélectionné : {{age}}")
+optionEntier("age", "age", "Choisis un âge", true)
+optionEntierLimites("age", "age", 13, 99)
 
-discordCommande("note", "Note sélectionnée : {{note}}")
-discordOptionNombre("note", "note", "Choisis une note", true)
-discordOptionNombreLimites("note", "note", 0, 20)
+commande("note", "Note sélectionnée : {{note}}")
+optionNombre("note", "note", "Choisis une note", true)
+optionNombreLimites("note", "note", 0, 20)
 ```
 
-- `discordOptionEntierLimites(commande, option, minimum, maximum)` accepte uniquement des bornes entières.
-- `discordOptionNombreLimites(commande, option, minimum, maximum)` accepte des bornes numériques, y compris décimales.
+- `optionEntierLimites(commande, option, minimum, maximum)` accepte uniquement des bornes entières.
+- `optionNombreLimites(commande, option, minimum, maximum)` accepte des bornes numériques, y compris décimales.
 - Le minimum doit être inférieur ou égal au maximum.
 - Les limites s'appliquent à l'interface Discord. Une option avec des choix prédéfinis ne peut pas recevoir de limites.
 
