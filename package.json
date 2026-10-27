@@ -1,7 +1,7 @@
 {
   "name": "fbp-language",
   "displayName": "FBP - French Bot Programming",
-  "description": "Compilateur et CLI du langage FBP.",
+  "description": "Interpréteur et CLI du langage FBP.",
   "version": "0.2.0",
   "private": true,
   "type": "commonjs",
@@ -12,7 +12,7 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/cli.js",
     "dev": "ts-node src/cli.ts",
-    "test": "npm run build"
+    "test": "npm run build && node --test tests/*.test.cjs"
   },
   "engines": {
     "node": ">=20"
