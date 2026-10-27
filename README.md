@@ -1,29 +1,61 @@
 # FBP — French Bot Programming
 
-FBP est un petit langage interprété par Node.js. Les fichiers source utilisent l'extension `.fbp`. Le projet fournit un CLI pour lancer les fichiers et les commandes définies dans `commandes.fbp`.
+FBP est un langage interprété par Node.js. Les fichiers source utilisent l'extension `.fbp`. Le paquet fournit le moteur et la commande `fbp`.
 
 ## Prérequis
 
 - Node.js 20 ou plus récent
 - npm
 
-## Utiliser FBP dans un Codespace
+## Installation depuis npm
 
-Dans le terminal du Codespace qui contient ce dépôt :
+Quand le paquet sera publié sur npm :
 
 ```bash
-npm install
-npm test
-npm link
-fbp help
-fbp ping
+npm install fbp-language
 ```
 
-`npm test` compile le moteur TypeScript et lance les tests de fonctionnement. `npm link` ajoute la commande `fbp` à l'environnement npm de ce Codespace.
+Puis, dans le `package.json` de ton projet :
 
-Pour utiliser FBP dans un autre Codespace, clone ce dépôt dans ce Codespace, puis exécute les mêmes commandes. Le lien npm n'est pas partagé automatiquement entre deux Codespaces.
+```json
+{
+  "scripts": {
+    "start": "fbp run lancer"
+  },
+  "dependencies": {
+    "fbp-language": "^0.2.0"
+  }
+}
+```
 
-## Commandes
+Lance le script avec `npm start`. npm rend la commande `fbp` disponible dans les scripts du projet.
+
+## Créer un projet FBP
+
+Crée un fichier `commandes.fbp` à la racine de ton projet. Malgré son extension, ce fichier est actuellement du JSON :
+
+```json
+{
+  "lancer": "scripts/main.fbp"
+}
+```
+
+Crée ensuite le fichier `scripts/main.fbp` :
+
+```fbp
+nom = "Mon projet"
+
+lance() {
+  affiche("FBP fonctionne !")
+  affiche("Projet :", nom)
+}
+
+lance()
+```
+
+Les chemins déclarés dans `commandes.fbp` sont relatifs à la racine du projet.
+
+## Commandes CLI
 
 ```bash
 fbp help
@@ -31,30 +63,14 @@ fbp version
 fbp info
 fbp ping
 fbp run lancer
-fbp run test
-fbp run-file exemples/bot/main.fbp
+fbp run-file scripts/main.fbp
 ```
 
-- `fbp run <nom>` lance une commande définie dans le fichier `commandes.fbp` du dossier courant.
-- `fbp run-file <fichier>` lance directement un fichier FBP.
+- `fbp run <nom>` exécute la commande correspondante dans le fichier `commandes.fbp` du dossier courant.
+- `fbp run-file <fichier>` exécute directement un fichier FBP.
 - `fbp ping` vérifie que le CLI répond ; il ne se connecte pas à Discord.
 
-Si la commande `fbp` n'est pas reconnue, vérifie que `npm link` a été exécuté dans ce Codespace après `npm run build`.
-
-## Définir les commandes
-
-`commandes.fbp` est actuellement un fichier JSON qui associe un nom de commande à un fichier :
-
-```json
-{
-  "lancer": "exemples/bot/main.fbp",
-  "test": "exemples/test.fbp"
-}
-```
-
-Pour ajouter une commande, ajoute une entrée dont la valeur est le chemin d'un fichier FBP, relatif à la racine du projet qui contient `commandes.fbp`.
-
-## Syntaxe prise en charge
+## Syntaxe actuelle
 
 ```fbp
 nom = "Gab"
@@ -68,13 +84,21 @@ lance() {
 lance()
 ```
 
-- Les variables déduisent leur type à partir des valeurs littérales. Il ne faut pas déclarer explicitement leur type.
-- Les types actuellement reconnus sont texte, nombre et booléen.
-- Les fonctions sans paramètres se déclarent avec `nom() {` puis se ferment avec `}`.
-- `affiche(...)` affiche les valeurs dans le terminal.
-- `import { fonction } de "./fichier.fbp"` permet d'importer des fonctions.
+- Types reconnus : texte, nombre et booléen.
+- Les fonctions ne prennent pas encore de paramètres.
+- `affiche(...)` écrit dans le terminal.
+- `import { fonction } de "./fichier.fbp"` importe des fonctions.
 - Les commentaires commencent par `//` ou `#`.
 
-## État du langage
+## Limites actuelles
 
-Cette version fournit un interpréteur de base, pas encore un langage complet. Les paramètres de fonction, les conditions, les boucles, les valeurs de retour, les expressions arithmétiques et la connexion à Discord ne sont pas encore implémentés. Le moteur doit être compilé avec `npm test` avant d'être utilisé via le CLI.
+FBP est encore un interpréteur de base. Les paramètres de fonction, les conditions, les boucles, les valeurs de retour et les expressions arithmétiques ne sont pas encore implémentés. La connexion à Discord n'est pas incluse dans le moteur.
+
+## Développement du dépôt
+
+```bash
+npm install
+npm test
+```
+
+Les fichiers d'essai internes se trouvent dans `tests/fixtures`. Ils ne font pas partie du paquet publié.
