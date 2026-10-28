@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { FbpError } from "./errors";
-import { Client, EmbedBuilder, GatewayIntentBits, SlashCommandBuilder } from "discord.js";
+import { Client, EmbedBuilder, GatewayIntentBits, PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
 import dotenv from "dotenv";
 
 type ValueType = "texte" | "nombre" | "booleen" | "inconnu";
@@ -110,7 +110,7 @@ function parseFile(file: string, source: string): Statement[] {
 type DiscordOptionType = "texte" | "nombre" | "entier" | "booleen" | "salon";
 type DiscordOption = { name: string; description: string; type: DiscordOptionType; required: boolean; choices?: Array<{ name: string; value: string | number }>; minValue?: number; maxValue?: number };
 type DiscordResponse =
-  | { type: "text"; content: string; ephemeral?: boolean; options?: DiscordOption[] }
+  | { type: "text"; content: string; ephemeral?: boolean; adminOnly?: boolean; roleAction?: "add" | "remove"; options?: DiscordOption[] }
   | { type: "embed"; title: string; description: string; color: string; fields: Array<{ name: string; value: string; dynamic?: boolean }>; userOption?: { name: string; description: string }; options?: DiscordOption[] };
 
 export class FbpCompiler {
@@ -237,6 +237,14 @@ export class FbpCompiler {
                   .setRequired(false)
               );
             }
+            if (response.type === "text" && response.roleAction) {
+              builder.setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles);
+              builder.addUserOption(option => option.setName("membre").setDescription("Membre concerné").setRequired(true));
+              builder.addRoleOption(option => option.setName("role").setDescription("Rôle à ajouter ou retirer").setRequired(true));
+            }
+            if (response.type === "text" && response.adminOnly) {
+              builder.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+            }
             for (const option of response.options ?? []) {
               const add = {
                 texte: () => builder.addStringOption(item => {
@@ -285,6 +293,44 @@ export class FbpCompiler {
         const response = this.discordCommands.get(interaction.commandName);
         if (response === undefined) return;
         try {
+          if (response.type === "text" && response.adminOnly &&
+              !interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)) {
+            await interaction.reply({ content: "Cette commande est réservée aux administrateurs.", ephemeral: true });
+            return;
+          }
+          if (response.type === "text" && response.roleAction) {
+            if (!interaction.inGuild() || !interaction.guild) {
+              await interaction.reply({ content: "Cette commande doit être utilisée sur un serveur.", ephemeral: true });
+              return;
+            }
+            if (!interaction.memberPermissions?.has(PermissionFlagsBits.ManageRoles)) {
+              await interaction.reply({ content: "Tu dois disposer de la permission Gérer les rôles.", ephemeral: true });
+              return;
+            }
+            const targetUser = interaction.options.getUser("membre", true);
+            const role = interaction.options.getRole("role", true);
+            const guild = interaction.guild;
+            const targetMember = await guild.members.fetch(targetUser.id).catch(() => null);
+            const botMember = guild.members.me;
+            if (!targetMember || !botMember) {
+              await interaction.reply({ content: "Impossible de récupérer le membre ou le bot sur ce serveur.", ephemeral: true });
+              return;
+            }
+            if (role.id === guild.id || role.managed || role.position >= botMember.roles.highest.position) {
+              await interaction.reply({ content: "Ce rôle ne peut pas être géré par le bot : vérifie son type et sa position dans la hiérarchie.", ephemeral: true });
+              return;
+            }
+            if (targetMember.id === interaction.user.id ||
+                targetMember.roles.highest.position >= (interaction.member as import("discord.js").GuildMember).roles.highest.position &&
+                interaction.user.id !== guild.ownerId) {
+              await interaction.reply({ content: "Tu ne peux pas modifier les rôles de ce membre en raison de la hiérarchie du serveur.", ephemeral: true });
+              return;
+            }
+            if (response.roleAction === "add") await targetMember.roles.add(role, "Commande FBP de gestion des rôles");
+            else await targetMember.roles.remove(role, "Commande FBP de gestion des rôles");
+            await interaction.reply({ content: response.content.replace(/\\{\\{membre\\}\\}/g, targetMember.user.username).replace(/\\{\\{role\\}\\}/g, role.name), ephemeral: response.ephemeral ?? false });
+            return;
+          }
           const optionValues = new Map<string, string>();
           for (const option of response.options ?? []) {
             let value: string | null = null;
@@ -352,6 +398,32 @@ export class FbpCompiler {
         throw new FbpError("Le nom d'une commande slash doit contenir 1 à 32 caractères : lettres minuscules, chiffres, tirets ou underscores.", undefined, line);
       }
       this.discordCommands.set(commandName, { type: "text", content: values[1], options: [] });
+      return;
+    }
+    if (name === "commandeAdmin") {
+      if (!this.discordClient) throw new FbpError("Appelle connexion() avant de déclarer une commande.", undefined, line);
+      if (values.length !== 2 || values.some(value => typeof value !== "string")) {
+        throw new FbpError("Utilisation : commandeAdmin(\"nom\", \"Réponse réservée aux administrateurs\").", undefined, line);
+      }
+      const [commandName, response] = values as string[];
+      if (!/^[a-z0-9_-]{1,32}$/.test(commandName)) throw new FbpError("Le nom d'une commande slash doit contenir 1 à 32 caractères : lettres minuscules, chiffres, tirets ou underscores.", undefined, line);
+      this.discordCommands.set(commandName, { type: "text", content: response, adminOnly: true, ephemeral: true, options: [] });
+      return;
+    }
+    if (name === "commandeAjouterRole" || name === "commandeRetirerRole") {
+      if (!this.discordClient) throw new FbpError("Appelle connexion() avant de déclarer une commande.", undefined, line);
+      if (values.length !== 1 || typeof values[0] !== "string") {
+        throw new FbpError("Utilisation : commandeAjouterRole(\"ajouter-role\") ou commandeRetirerRole(\"retirer-role\").", undefined, line);
+      }
+      const commandName = values[0];
+      if (!/^[a-z0-9_-]{1,32}$/.test(commandName)) throw new FbpError("Le nom d'une commande slash doit contenir 1 à 32 caractères : lettres minuscules, chiffres, tirets ou underscores.", undefined, line);
+      this.discordCommands.set(commandName, {
+        type: "text",
+        content: name === "commandeAjouterRole" ? "Le rôle {{role}} a été ajouté à {{membre}}." : "Le rôle {{role}} a été retiré à {{membre}}.",
+        roleAction: name === "commandeAjouterRole" ? "add" : "remove",
+        ephemeral: true,
+        options: []
+      });
       return;
     }
     if (name === "commandePrivee") {
