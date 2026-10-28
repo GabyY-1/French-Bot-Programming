@@ -21,7 +21,10 @@ const builtins = [
   ["sondageCreer", "Publie un sondage Discord."],
   ["webhookCreer", "Crée un webhook dans un salon."],
   ["webhookEnvoyer", "Envoie un message via un webhook Discord."],
-  ["messagePrive", "Envoie un message privé à un membre."]
+  ["messagePrive", "Envoie un message privé à un membre."],
+  ["commandeContextuelleUtilisateur", "Déclare une commande contextuelle sur un utilisateur."],
+  ["commandeContextuelleMessage", "Déclare une commande contextuelle sur un message."],
+  ["evenementCreer", "Crée un événement planifié dans un salon vocal."],
   ["optionTexte", "Ajoute une option texte à une commande slash."],
   ["optionNombre", "Ajoute une option numérique."],
   ["optionEntier", "Ajoute une option entière."],
