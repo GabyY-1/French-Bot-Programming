@@ -19,7 +19,8 @@ test("les erreurs Discord courantes ont une explication compréhensible", () => 
 });
 
 test("les tokens de bot ne sont pas reproduits dans les messages", () => {
-  const result = formatDiscordError(new Error("Bot abcdefghijklmnopqrstuvwxyz1234567890"));
-  assert.doesNotMatch(result, /abcdefghijklmnopqrstuvwxyz1234567890/);
-  assert.match(result, /masqué/);
+  const token = "A".repeat(24) + "." + "B".repeat(6) + "." + "C".repeat(25);
+  const result = formatDiscordError(new Error("Échec avec " + token));
+  assert.doesNotMatch(result, /C{20,}/);
+  assert.match(result, /token masqué/);
 });
