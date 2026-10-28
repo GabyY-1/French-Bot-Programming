@@ -1492,6 +1492,70 @@ export class FbpCompiler {
       command.fields.push({ name: fieldName, value: fieldValue });
       return;
     }
+
+    if (name === "messagePrive") {
+      if (!this.discordClient) throw new FbpError("Appelle connexion() avant messagePrive().", undefined, line);
+      if (values.length !== 2 || values.some(v => typeof v !== "string")) throw new FbpError('Utilisation : messagePrive("ID_MEMBRE", "message").', undefined, line);
+      const [userId, content] = values as string[];
+      if (!/^\\d{17,20}$/.test(userId) || !content.trim() || content.length > 2000) throw new FbpError("Identifiant Discord ou message invalide.", undefined, line);
+      void this.discordClient.users.fetch(userId).then(user => user.send({ content })).then(() => this.output("Message privé envoyé.")).catch(error => this.output("Échec du message privé : " + String(error)));
+      return;
+    }
+    if (name === "invitationCreer") {
+      if (!this.discordClient) throw new FbpError("Appelle connexion() avant invitationCreer().", undefined, line);
+      if (values.length < 1 || values.length > 2 || typeof values[0] !== "string" || values.length === 2 && typeof values[1] !== "number") throw new FbpError('Utilisation : invitationCreer("ID_SALON", dureeEnSecondes).', undefined, line);
+      const channelId = values[0], duration = values[1] ?? 3600;
+      if (!/^\\d{17,20}$/.test(channelId) || !Number.isInteger(duration) || (duration as number) < 0 || (duration as number) > 604800) throw new FbpError("Salon ou durée d'invitation invalide.", undefined, line);
+      void this.discordClient.channels.fetch(channelId).then(channel => {
+        if (!channel || !("createInvite" in channel) || typeof channel.createInvite !== "function") throw new Error("Ce salon ne permet pas de créer une invitation.");
+        return channel.createInvite({ maxAge: duration as number, unique: true });
+      }).then(invite => this.output("Invitation créée : " + invite.url)).catch(error => this.output("Échec de l'invitation : " + String(error)));
+      return;
+    }
+    if (name === "sondageCreer") {
+      if (!this.discordClient) throw new FbpError("Appelle connexion() avant sondageCreer().", undefined, line);
+      if (values.length < 4 || values.length > 7 || values.some(v => typeof v !== "string")) throw new FbpError('Utilisation : sondageCreer("ID_SALON", "Question", "Choix 1", "Choix 2", ...).', undefined, line);
+      const [channelId, question, ...answers] = values as string[];
+      if (!/^\\d{17,20}$/.test(channelId) || !question.trim() || question.length > 300 || answers.length < 2 || answers.length > 5 || answers.some(a => !a.trim() || a.length > 55)) throw new FbpError("Le sondage doit contenir une question et de 2 à 5 choix valides.", undefined, line);
+      void this.discordClient.channels.fetch(channelId).then(channel => {
+        if (!channel || !("send" in channel) || typeof channel.send !== "function") throw new Error("Ce salon ne permet pas de publier un sondage.");
+        return channel.send({ poll: { question: { text: question }, answers: answers.map(text => ({ text })), duration: 24, allowMultiselect: false } });
+      }).then(() => this.output("Sondage publié.")).catch(error => this.output("Échec du sondage : " + String(error)));
+      return;
+    }
+    if (name === "webhookCreer") {
+      if (!this.discordClient) throw new FbpError("Appelle connexion() avant webhookCreer().", undefined, line);
+      if (values.length !== 2 || values.some(v => typeof v !== "string")) throw new FbpError('Utilisation : webhookCreer("ID_SALON", "Nom").', undefined, line);
+      const [channelId, webhookName] = values as string[];
+      if (!/^\\d{17,20}$/.test(channelId) || !webhookName.trim() || webhookName.length > 80) throw new FbpError("Salon ou nom de webhook invalide.", undefined, line);
+      void this.discordClient.channels.fetch(channelId).then(channel => {
+        if (!channel || !("createWebhook" in channel) || typeof channel.createWebhook !== "function") throw new Error("Ce salon ne permet pas de créer un webhook.");
+        return channel.createWebhook({ name: webhookName });
+      }).then(webhook => this.output("Webhook créé : " + webhook.url)).catch(error => this.output("Échec du webhook : " + String(error)));
+      return;
+    }
+    if (name === "webhookEnvoyer") {
+      if (values.length !== 2 || values.some(v => typeof v !== "string")) throw new FbpError('Utilisation : webhookEnvoyer("URL_WEBHOOK", "message").', undefined, line);
+      const [webhookUrl, content] = values as string[];
+      let parsed: URL;
+      try { parsed = new URL(webhookUrl); } catch { throw new FbpError("URL de webhook invalide.", undefined, line); }
+      if (parsed.protocol !== "https:" || !["discord.com", "discordapp.com"].includes(parsed.hostname) || !parsed.pathname.startsWith("/api/webhooks/") || !content.trim() || content.length > 2000) throw new FbpError("URL Discord ou message de webhook invalide.", undefined, line);
+      void import("discord.js").then(({ WebhookClient }) => new WebhookClient({ url: webhookUrl }).send({ content })).then(() => this.output("Message envoyé par webhook.")).catch(error => this.output("Échec du webhook : " + String(error)));
+      return;
+    }
+    if (name === "evenementPrive") {
+      if (!this.discordClient) throw new FbpError("Appelle connexion() avant evenementPrive().", undefined, line);
+      if (values.length !== 1 || typeof values[0] !== "string") throw new FbpError('Utilisation : evenementPrive("message").', undefined, line);
+      const template = values[0];
+      this.discordClient.on("messageCreate", message => {
+        if (message.guild || message.author.bot) return;
+        this.output(template.replace(/\\{\\{([a-z0-9_-]{1,32})\\}\\}/g, (match, key: string) => ({ pseudo: message.author.username, id: message.author.id, message: message.content, message_id: message.id }[key] ?? match)));
+      });
+      return;
+    }
+    if (name === "vocalRejoindre" || name === "vocalQuitter") {
+      throw new FbpError("La connexion vocale n'est pas encore disponible : @discordjs/voice doit être intégré à la dépendance du projet.", undefined, line);
+    }
     if (name === "ping") {
       this.output("FBP fonctionne. Cette commande ne vérifie pas à elle seule une connexion Discord.");
       return;
