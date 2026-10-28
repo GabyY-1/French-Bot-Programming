@@ -388,29 +388,48 @@ export class FbpCompiler {
             }
             if (response.type === "text" && response.contentAction) {
               const action = response.contentAction;
-              const permission = action === "create-channel" || action === "delete-channel" || action === "rename-channel" || action === "topic-channel"
-                ? PermissionFlagsBits.ManageChannels
-                : action === "pin" || action === "unpin"
-                  ? PermissionFlagsBits.ManageMessages
-                  : action === "delete" || action === "edit"
-                    ? PermissionFlagsBits.ManageMessages
-                    : PermissionFlagsBits.SendMessages;
+              const channelAdmin = ["create-channel", "delete-channel", "rename-channel", "topic-channel", "create-category", "move-category", "delete-category", "channel-permission", "create-thread"].includes(action);
+              const permission = channelAdmin ? PermissionFlagsBits.ManageChannels
+                : ["pin", "unpin", "delete", "edit"].includes(action) ? PermissionFlagsBits.ManageMessages
+                : action === "read" ? PermissionFlagsBits.ViewChannel
+                : PermissionFlagsBits.SendMessages;
               builder.setDefaultMemberPermissions(permission);
               if (action === "create-channel") {
                 builder.addStringOption(option => option.setName("nom").setDescription("Nom du salon").setRequired(true));
                 builder.addStringOption(option => option.setName("type").setDescription("Type de salon").addChoices({ name: "Texte", value: "texte" }, { name: "Vocal", value: "vocal" }).setRequired(true));
+              } else if (action === "create-category") {
+                builder.addStringOption(option => option.setName("nom").setDescription("Nom de la catégorie").setRequired(true));
+              } else if (action === "delete-category") {
+                builder.addChannelOption(option => option.setName("categorie").setDescription("Catégorie à supprimer").setRequired(true));
+              } else if (action === "move-category") {
+                builder.addChannelOption(option => option.setName("salon").setDescription("Salon à déplacer").setRequired(true));
+                builder.addChannelOption(option => option.setName("categorie").setDescription("Catégorie de destination").setRequired(true));
+              } else if (action === "channel-permission") {
+                builder.addChannelOption(option => option.setName("salon").setDescription("Salon concerné").setRequired(true));
+                builder.addRoleOption(option => option.setName("role").setDescription("Rôle concerné").setRequired(true));
+                builder.addStringOption(option => option.setName("permission").setDescription("Permission à modifier").addChoices({name:"Voir le salon",value:"ViewChannel"},{name:"Envoyer des messages",value:"SendMessages"},{name:"Lire l'historique",value:"ReadMessageHistory"},{name:"Joindre des fichiers",value:"AttachFiles"},{name:"Ajouter des réactions",value:"AddReactions"}).setRequired(true));
+                builder.addStringOption(option => option.setName("etat").setDescription("Autoriser ou refuser").addChoices({name:"Autoriser",value:"allow"},{name:"Refuser",value:"deny"},{name:"Réinitialiser",value:"reset"}).setRequired(true));
               } else if (action === "delete-channel" || action === "rename-channel" || action === "topic-channel") {
                 builder.addChannelOption(option => option.setName("salon").setDescription("Salon concerné").setRequired(true));
                 if (action === "rename-channel") builder.addStringOption(option => option.setName("nom").setDescription("Nouveau nom").setRequired(true));
                 if (action === "topic-channel") builder.addStringOption(option => option.setName("sujet").setDescription("Nouveau sujet").setRequired(true));
-              } else {
+              } else if (action === "send" || action === "attach" || action === "read") {
                 builder.addChannelOption(option => option.setName("salon").setDescription("Salon concerné").setRequired(action !== "send"));
                 if (action === "send") builder.addStringOption(option => option.setName("message").setDescription("Message à envoyer").setRequired(true));
-                else {
-                  builder.addStringOption(option => option.setName("message_id").setDescription("Identifiant du message").setRequired(true));
-                  if (action === "edit") builder.addStringOption(option => option.setName("contenu").setDescription("Nouveau contenu").setRequired(true));
-                  if (action === "react") builder.addStringOption(option => option.setName("emoji").setDescription("Emoji à ajouter").setRequired(true));
+                if (action === "attach") {
+                  builder.addStringOption(option => option.setName("url").setDescription("URL HTTPS du fichier").setRequired(true));
+                  builder.addStringOption(option => option.setName("message").setDescription("Texte facultatif").setRequired(false));
                 }
+                if (action === "read") builder.addIntegerOption(option => option.setName("nombre").setDescription("Nombre de messages (1 à 10)").setMinValue(1).setMaxValue(10).setRequired(true));
+              } else if (action === "send-thread") {
+                builder.addChannelOption(option => option.setName("fil").setDescription("Fil de discussion").setRequired(true));
+                builder.addStringOption(option => option.setName("message").setDescription("Message à envoyer").setRequired(true));
+              } else {
+                builder.addChannelOption(option => option.setName("salon").setDescription("Salon concerné").setRequired(true));
+                builder.addStringOption(option => option.setName("message_id").setDescription("Identifiant du message").setRequired(true));
+                if (action === "edit") builder.addStringOption(option => option.setName("contenu").setDescription("Nouveau contenu").setRequired(true));
+                if (action === "react") builder.addStringOption(option => option.setName("emoji").setDescription("Emoji à ajouter").setRequired(true));
+                if (action === "create-thread") builder.addStringOption(option => option.setName("nom").setDescription("Nom du fil").setRequired(true));
               }
             }
             if (response.type === "text" && response.adminOnly) {
