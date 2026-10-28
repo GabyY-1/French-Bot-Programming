@@ -6,7 +6,19 @@ Le langage permet de déclarer des commandes slash, des réponses simples ou int
 
 ## Version actuelle
 
-La version actuelle est FBP 1.3.3. La version 1.3.1 ajoute les commandes de gestion des messages, salons, catégories et fils de discussion. La version 1.3.2 étend le langage avec les événements Discord : messages, réactions, interactions, salons vocaux et événements du serveur. La version 1.3.3 ajoute les connexions vocales, les invitations, les sondages, les événements planifiés, les webhooks, les messages privés et les commandes contextuelles utilisateur/message. La disponibilité sur npm dépend de la publication de la version.
+La version actuelle est FBP 1.3.4. La version 1.3.1 ajoute les commandes de gestion des messages, salons, catégories et fils de discussion. La version 1.3.2 étend le langage avec les événements Discord : messages, réactions, interactions, salons vocaux et événements du serveur. La version 1.3.3 ajoute les connexions vocales, les invitations, les sondages, les événements planifiés, les webhooks, les messages privés et les commandes contextuelles utilisateur/message. La version 1.3.4 renforce les vérifications de permissions pour les actions sensibles, améliore les erreurs Discord en français, gère les erreurs de connexion et évite d'afficher l'URL secrète d'un webhook lors de sa création. La disponibilité sur npm dépend de la publication de la version.
+
+
+
+## Sécurité et fiabilité (v1.3.4)
+
+- Les actions de création d'événement, d'invitation, de sondage et de webhook vérifient les permissions du bot avant l'appel à Discord.
+- Les erreurs Discord courantes sont reformulées en français, notamment les permissions manquantes, l'accès refusé, les ressources introuvables, les erreurs temporaires et les limites de requêtes.
+- Les erreurs de connexion et de passerelle Discord sont signalées sans afficher directement les secrets de webhook.
+- Les intents nécessaires sont calculés à partir des événements déclarés. Si Discord refuse un intent privilégié, le message d'erreur indique où vérifier sa configuration.
+- Le fichier .env reste ignoré par Git. Ne publie jamais un token ni une URL de webhook dans un fichier FBP, un dépôt ou un journal partagé.
+
+Discord.js applique déjà la gestion des limites de requêtes REST et des attentes de réessai ; FBP traduit désormais les erreurs de limite en messages compréhensibles. Les configurations FBP de commandes et d'événements restent communes à l'instance du bot ; une configuration personnalisée et persistante par serveur n'est pas encore exposée par le langage.
 
 ## Fonctionnalités
 
