@@ -1604,8 +1604,9 @@ export class FbpCompiler {
       void this.discordClient.channels.fetch(channelId).then(async channel => {
         if (!channel || !channel.isVoiceBased() || !("guild" in channel) || !channel.guild) throw new Error("Le salon indiqué n'est pas un salon vocal valide.");
         const voice = await import("@discordjs/voice");
-        voice.joinVoiceChannel({ channelId: channel.id, guildId: channel.guild.id, adapterCreator: channel.guild.voiceAdapterCreator, selfDeaf: true });
-        this.output("Connexion au salon vocal : " + ("name" in channel ? channel.name : channel.id));
+        const connection = voice.joinVoiceChannel({ channelId: channel.id, guildId: channel.guild.id, adapterCreator: channel.guild.voiceAdapterCreator, selfDeaf: true });
+        await voice.entersState(connection, voice.VoiceConnectionStatus.Ready, 15_000);
+        this.output("Connecté au salon vocal : " + ("name" in channel ? channel.name : channel.id));
       }).catch(error => this.output("Échec de la connexion vocale : " + (error instanceof Error ? error.message : String(error))));
       return;
     }
