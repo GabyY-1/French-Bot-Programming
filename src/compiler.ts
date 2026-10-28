@@ -389,7 +389,7 @@ export class FbpCompiler {
             membre: message.author.username,
             id: message.author.id,
             serveur: message.guild.name,
-            salon: " #" + (message.channel.isTextBased() && "name" in message.channel ? message.channel.name : message.channelId ?? "inconnu"),
+            salon: " #" + ((message.channel.isTextBased() && "name" in message.channel ? message.channel.name : message.channelId) ?? "inconnu"),
             message: message.content || "[message sans texte]",
             message_id: message.id,
             lien: message.url
@@ -407,7 +407,7 @@ export class FbpCompiler {
             membre: user.username,
             id: user.id,
             serveur: guild.name,
-            salon: "name" in resolvedReaction.message.channel ? resolvedReaction.message.channel.name : resolvedReaction.message.channelId ?? "inconnu",
+            salon: ("name" in resolvedReaction.message.channel ? resolvedReaction.message.channel.name : resolvedReaction.message.channelId) ?? "inconnu",
             reaction: resolvedReaction.emoji.toString(),
             message_id: resolvedReaction.message.id
           });
@@ -415,18 +415,18 @@ export class FbpCompiler {
 
       client.on("messageReactionRemove", async (reaction, user) => {
           if (user.bot) return;
-          if (reaction.partial) reaction = await reaction.fetch().catch(() => null) as typeof reaction;
-          if (!reaction) return;
-          const guild = reaction.message.guild;
+          const resolvedReaction = reaction.partial ? await reaction.fetch().catch(() => null) : reaction;
+          if (!resolvedReaction) return;
+          const guild = resolvedReaction.message.guild;
           if (!guild) return;
           renderDiscordEvent("reaction:retrait", {
             pseudo: user.username,
             membre: user.username,
             id: user.id,
             serveur: guild.name,
-            salon: "name" in reaction.message.channel ? reaction.message.channel.name : reaction.message.channelId,
-            reaction: reaction.emoji.toString(),
-            message_id: reaction.message.id
+            salon: ("name" in resolvedReaction.message.channel ? resolvedReaction.message.channel.name : resolvedReaction.message.channelId) ?? "inconnu",
+            reaction: resolvedReaction.emoji.toString(),
+            message_id: resolvedReaction.message.id
           });
         });
 
@@ -443,7 +443,7 @@ export class FbpCompiler {
             membre: user.username,
             id: user.id,
             serveur: interaction.guild?.name ?? "Message privé",
-            salon: interaction.channel && "name" in interaction.channel ? interaction.channel.name : interaction.channelId ?? "inconnu",
+            salon: (interaction.channel && "name" in interaction.channel ? interaction.channel.name : interaction.channelId) ?? "inconnu",
             custom_id: "customId" in interaction ? interaction.customId : "inconnu",
             valeurs: interaction.isAnySelectMenu() ? interaction.values.join(", ") : "",
             formulaire: interaction.isModalSubmit()
