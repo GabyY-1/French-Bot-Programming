@@ -119,7 +119,7 @@ type DiscordResponse =
         adminOnly?: boolean;
         roleAction?: "add" | "remove" | "check";
         memberAction?: "ban" | "kick" | "timeout" | "untimeout" | "nickname" | "unban";
-        contentAction?: "send" | "read" | "edit" | "delete" | "react" | "pin" | "unpin" | "attach" | "create-channel" | "delete-channel" | "rename-channel" | "topic-channel" | "create-category" | "move-category" | "delete-category" | "channel-permission" | "create-thread" | "send-thread";
+        contentAction?: "send" | "read" | "edit" | "delete" | "react" | "pin" | "unpin" | "attach" | "create-channel" | "delete-channel" | "rename-channel" | "topic-channel" | "create-category" | "move-category" | "delete-category" | "channel-permission" | "create-thread" | "send-thread" | "close-thread";
         options?: DiscordOption[];
       }
     | {
@@ -388,7 +388,7 @@ export class FbpCompiler {
             }
             if (response.type === "text" && response.contentAction) {
               const action = response.contentAction;
-              const channelAdmin = ["create-channel", "delete-channel", "rename-channel", "topic-channel", "create-category", "move-category", "delete-category", "channel-permission", "create-thread"].includes(action);
+              const channelAdmin = ["create-channel", "delete-channel", "rename-channel", "topic-channel", "create-category", "move-category", "delete-category", "channel-permission", "create-thread", "close-thread"].includes(action);
               const permission = channelAdmin ? PermissionFlagsBits.ManageChannels
                 : ["pin", "unpin", "delete", "edit"].includes(action) ? PermissionFlagsBits.ManageMessages
                 : action === "read" ? PermissionFlagsBits.ViewChannel
@@ -424,6 +424,8 @@ export class FbpCompiler {
               } else if (action === "send-thread") {
                 builder.addChannelOption(option => option.setName("fil").setDescription("Fil de discussion").setRequired(true));
                 builder.addStringOption(option => option.setName("message").setDescription("Message à envoyer").setRequired(true));
+              } else if (action === "close-thread") {
+                builder.addChannelOption(option => option.setName("fil").setDescription("Fil à fermer").setRequired(true));
               } else {
                 builder.addChannelOption(option => option.setName("salon").setDescription("Salon concerné").setRequired(true));
                 builder.addStringOption(option => option.setName("message_id").setDescription("Identifiant du message").setRequired(true));
@@ -631,6 +633,16 @@ export class FbpCompiler {
               }
               const category = await guild.channels.create({ name, type: 4, reason: "Création via FBP" });
               await interaction.reply({ content: "Catégorie créée : " + category.toString(), ephemeral: true });
+              return;
+            }
+            if (action === "close-thread") {
+              const thread = interaction.options.getChannel("fil", true);
+              if (!("isThread" in thread) || typeof thread.isThread !== "function" || !thread.isThread() || !("setArchived" in thread) || typeof thread.setArchived !== "function") {
+                await interaction.reply({ content: "Le salon sélectionné n'est pas un fil de discussion.", ephemeral: true });
+                return;
+              }
+              await thread.setArchived(true, "Fermeture via FBP");
+              await interaction.reply({ content: "Fil archivé.", ephemeral: true });
               return;
             }
             if (action === "send-thread") {
@@ -976,7 +988,7 @@ export class FbpCompiler {
       });
       return;
     }
-    if (["commandeEnvoyerMessage", "commandeLireMessages", "commandeModifierMessage", "commandeSupprimerMessage", "commandeReagirMessage", "commandeEpinglerMessage", "commandeDesepinglerMessage", "commandeJoindreFichier", "commandeCreerSalon", "commandeSupprimerSalon", "commandeRenommerSalon", "commandeSujetSalon", "commandeCreerCategorie", "commandeSupprimerCategorie", "commandeDeplacerSalon", "commandePermissionSalon", "commandeCreerFil", "commandeEnvoyerFil"].includes(name)) {
+    if (["commandeEnvoyerMessage", "commandeLireMessages", "commandeModifierMessage", "commandeSupprimerMessage", "commandeReagirMessage", "commandeEpinglerMessage", "commandeDesepinglerMessage", "commandeJoindreFichier", "commandeCreerSalon", "commandeSupprimerSalon", "commandeRenommerSalon", "commandeSujetSalon", "commandeCreerCategorie", "commandeSupprimerCategorie", "commandeDeplacerSalon", "commandePermissionSalon", "commandeCreerFil", "commandeEnvoyerFil", "commandeFermerFil"].includes(name)) {
       if (!this.discordClient) throw new FbpError("Appelle connexion() avant de déclarer une commande.", undefined, line);
       if (values.length !== 1 || typeof values[0] !== "string") {
         throw new FbpError("Utilisation : commandeEnvoyerMessage/ModifierMessage/SupprimerMessage/ReagirMessage/EpinglerMessage/DesepinglerMessage/CreerSalon/SupprimerSalon/RenommerSalon/SujetSalon(\"nom-commande\").", undefined, line);
@@ -1001,7 +1013,8 @@ export class FbpCompiler {
         commandeDeplacerSalon: "move-category",
         commandePermissionSalon: "channel-permission",
         commandeCreerFil: "create-thread",
-        commandeEnvoyerFil: "send-thread"
+        commandeEnvoyerFil: "send-thread",
+        commandeFermerFil: "close-thread"
       };
       this.discordCommands.set(commandName, {
         type: "text",
