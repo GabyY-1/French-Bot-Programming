@@ -862,7 +862,7 @@ export class FbpCompiler {
       });
       return;
     }
-    if (["commandeEnvoyerMessage", "commandeModifierMessage", "commandeSupprimerMessage", "commandeReagirMessage", "commandeEpinglerMessage", "commandeDesepinglerMessage", "commandeCreerSalon", "commandeSupprimerSalon", "commandeRenommerSalon", "commandeSujetSalon"].includes(name)) {
+    if (["commandeEnvoyerMessage", "commandeLireMessages", "commandeModifierMessage", "commandeSupprimerMessage", "commandeReagirMessage", "commandeEpinglerMessage", "commandeDesepinglerMessage", "commandeJoindreFichier", "commandeCreerSalon", "commandeSupprimerSalon", "commandeRenommerSalon", "commandeSujetSalon", "commandeCreerCategorie", "commandeSupprimerCategorie", "commandeDeplacerSalon", "commandePermissionSalon", "commandeCreerFil", "commandeEnvoyerFil"].includes(name)) {
       if (!this.discordClient) throw new FbpError("Appelle connexion() avant de déclarer une commande.", undefined, line);
       if (values.length !== 1 || typeof values[0] !== "string") {
         throw new FbpError("Utilisation : commandeEnvoyerMessage/ModifierMessage/SupprimerMessage/ReagirMessage/EpinglerMessage/DesepinglerMessage/CreerSalon/SupprimerSalon/RenommerSalon/SujetSalon(\"nom-commande\").", undefined, line);
@@ -871,15 +871,23 @@ export class FbpCompiler {
       if (!/^[a-z0-9_-]{1,32}$/.test(commandName)) throw new FbpError("Le nom de la commande slash est invalide.", undefined, line);
       const actions: Record<string, NonNullable<Extract<DiscordResponse, { type: "text" }>["contentAction"]>> = {
         commandeEnvoyerMessage: "send",
+        commandeLireMessages: "read",
         commandeModifierMessage: "edit",
         commandeSupprimerMessage: "delete",
         commandeReagirMessage: "react",
         commandeEpinglerMessage: "pin",
         commandeDesepinglerMessage: "unpin",
+        commandeJoindreFichier: "attach",
         commandeCreerSalon: "create-channel",
         commandeSupprimerSalon: "delete-channel",
         commandeRenommerSalon: "rename-channel",
-        commandeSujetSalon: "topic-channel"
+        commandeSujetSalon: "topic-channel",
+        commandeCreerCategorie: "create-category",
+        commandeSupprimerCategorie: "delete-category",
+        commandeDeplacerSalon: "move-category",
+        commandePermissionSalon: "channel-permission",
+        commandeCreerFil: "create-thread",
+        commandeEnvoyerFil: "send-thread"
       };
       this.discordCommands.set(commandName, {
         type: "text",
