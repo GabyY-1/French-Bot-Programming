@@ -1,8 +1,29 @@
 # FBP — French Bot Programming
 
-![Logo FBP](https://raw.githubusercontent.com/GabyY-1/French-Bot-Programming/main/assets/fbp-logo.svg)
+French Bot Programming (FBP) est un langage de programmation conçu pour créer et gérer des bots Discord avec une syntaxe en français, plus simple à lire que du JavaScript Discord.js classique. Les fichiers source utilisent l’extension `.fbp`. FBP fournit un compilateur, une commande en ligne de commande (`fbp`) et un support de coloration syntaxique pour VS Code.
 
-FBP est un langage interprété par Node.js. Les fichiers source utilisent l'extension `.fbp`. Le paquet fournit le moteur et la commande `fbp`.
+Le langage permet de déclarer des commandes slash, des réponses simples ou intégrant des embeds, des options utilisateur/rôle/salon, ainsi que des événements de membres et des actions de modération. FBP est basé sur Node.js et s’appuie sur Discord.js pour communiquer avec l’API Discord. Certaines fonctionnalités nécessitent d’activer les intents et permissions correspondants dans le portail développeur Discord.
+
+## Version actuelle
+
+La branche de développement prépare FBP 1.3.0. Les fonctionnalités de messages et de salons sont prévues pour la version 1.3.1 et ne sont pas encore garanties disponibles dans la version publiée sur npm.
+
+## Fonctionnalités
+
+- Langage en français avec fichiers `.fbp`
+- Compilateur et CLI `fbp`
+- Commandes slash Discord et réponses privées
+- Réponses enrichies avec embeds et champs
+- Options slash pour utilisateurs, rôles et salons
+- Événements de membres et commandes de modération en développement pour la 1.3.0
+- Support VS Code intégré au package
+
+## Prérequis
+
+- Node.js 20 ou plus récent
+- npm
+
+## Installation depuis npm
 
 ## Prérequis
 
