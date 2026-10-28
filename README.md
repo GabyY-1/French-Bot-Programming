@@ -6,7 +6,7 @@ Le langage permet de déclarer des commandes slash, des réponses simples ou int
 
 ## Version actuelle
 
-La branche de développement prépare FBP 1.3.0. Les fonctionnalités de messages et de salons sont prévues pour la version 1.3.1 et ne sont pas encore garanties disponibles dans la version publiée sur npm.
+La branche `main` prépare FBP 1.3.1. Cette version ajoute les commandes de gestion des messages, salons, catégories et fils de discussion. La lecture de l’historique permet de récupérer jusqu’à 100 messages, répartis en réponses privées si nécessaire. La disponibilité sur npm dépend de la publication de cette version.
 
 ## Fonctionnalités
 
@@ -15,7 +15,7 @@ La branche de développement prépare FBP 1.3.0. Les fonctionnalités de message
 - Commandes slash Discord et réponses privées
 - Réponses enrichies avec embeds et champs
 - Options slash pour utilisateurs, rôles et salons
-- Événements de membres et commandes de modération en développement pour la 1.3.0
+- Événements de membres, modération et gestion des messages/salons
 - Support VS Code intégré au package
 
 ## Prérequis
