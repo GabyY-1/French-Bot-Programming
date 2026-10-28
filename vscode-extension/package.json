@@ -46,5 +46,6 @@
         "path": "./themes/fbp-icon-theme.json"
       }
     ]
-  }
+  },
+  "license": "MMPL"
 }
