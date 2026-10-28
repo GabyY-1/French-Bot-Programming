@@ -73,3 +73,29 @@ test("les sous-commandes et groupes sont acceptés", () => {
     `sousCommandeGroupe("config", "salons", "aide", "Afficher l'aide", "Utilise les commandes de configuration.")`
   ].join("\n")));
 });
+
+
+test("les événements de membres et les commandes de modération sont déclarables", () => {
+  assert.doesNotThrow(() => runSource([
+    "connexion()",
+    'evenementMembre("arrivee", "{{pseudo}} a rejoint le serveur.")',
+    'evenementMembre("depart", "{{membre}} est parti.")',
+    'evenementMembre("pseudo", "{{ancien}} devient {{nouveau}}.")',
+    'evenementMembre("roles", "{{anciens_roles}} vers {{nouveaux_roles}}")',
+    'evenementMembre("statut", "{{ancien}} vers {{nouveau}}")',
+    'commandeBannir("bannir")',
+    'commandeExpulser("expulser")',
+    'commandeTimeout("timeout")',
+    'commandeRetirerTimeout("retirer-timeout")',
+    'commandeSurnom("surnom")',
+    'commandeDebannir("debannir")',
+    'commandeVerifierRole("verifier-role")'
+  ].join("\\n")));
+});
+
+test("un événement membre inconnu est refusé", () => {
+  assert.throws(
+    () => runSource(['connexion()', 'evenementMembre("inconnu", "test")'].join("\\n")),
+    /Événement inconnu/
+  );
+});
