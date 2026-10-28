@@ -120,7 +120,8 @@ test("les commandes de messages et de salons sont déclarables", () => {
     'commandeDeplacerSalon("deplacer-salon")',
     'commandePermissionSalon("permission-salon")',
     'commandeCreerFil("creer-fil")',
-    'commandeEnvoyerFil("envoyer-fil")'
+    'commandeEnvoyerFil("envoyer-fil")',
+    'commandeFermerFil("fermer-fil")'
   ].join("\n")));
 });
 
