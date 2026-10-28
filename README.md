@@ -186,6 +186,38 @@ sousCommandeGroupe("config", "salons", "aide", "Afficher l'aide", "Utilise les c
 
 Les options utilisateur et rôle sont également disponibles avec `optionUtilisateur` et `optionRole`. Pour un rôle, la réponse contient une mention Discord.
 
+## Membres, rôles et modération (v1.3.0)
+
+Les événements de membres se déclarent après `connexion()`. Les messages utilisent les variables `{{membre}}`, `{{pseudo}}`, `{{id}}`, `{{serveur}}`, `{{roles}}`, `{{ancien}}`, `{{nouveau}}`, `{{anciens_roles}}` et `{{nouveaux_roles}}`, selon l'événement.
+
+```fbp
+connexion()
+evenementMembre("arrivee", "{{pseudo}} a rejoint {{serveur}}.")
+evenementMembre("depart", "{{membre}} a quitté le serveur.")
+evenementMembre("pseudo", "Pseudo modifié : {{ancien}} → {{nouveau}}.")
+evenementMembre("roles", "Rôles de {{membre}} : {{anciens_roles}} → {{nouveaux_roles}}.")
+evenementMembre("statut", "Statut de {{membre}} : {{ancien}} → {{nouveau}}.")
+```
+
+Commandes de modération :
+
+```fbp
+connexion()
+commandeBannir("bannir")
+commandeExpulser("expulser")
+commandeTimeout("timeout")
+commandeRetirerTimeout("retirer-timeout")
+commandeSurnom("surnom")
+commandeDebannir("debannir")
+commandeAjouterRole("ajouter-role")
+commandeRetirerRole("retirer-role")
+commandeVerifierRole("verifier-role")
+```
+
+Les commandes de modération sont limitées par les permissions Discord, la hiérarchie des rôles et les limites de Discord. `timeout` accepte une durée de 1 à 40 320 minutes. `surnom` accepte un surnom vide pour le retirer. `debannir` demande l'identifiant Discord de l'utilisateur. Le bot doit disposer des permissions correspondantes et son rôle doit être suffisamment haut.
+
+**Configuration obligatoire :** les événements d'arrivée, départ et changements de membre nécessitent l'intent privilégié **Server Members Intent**. Le suivi des statuts nécessite également **Presence Intent**. Active-les dans le Discord Developer Portal, section *Bot → Privileged Gateway Intents*. Sans ces intents, Discord ne transmettra pas tous ces événements.
+
 ## Nouveautés de FBP 1.2.4
 
 - `fbp -init` conserve les fichiers déjà présents dans le projet et dans le dossier de l’extension VS Code.
