@@ -281,3 +281,7 @@ optionNombreLimites("note", "note", 0, 20)
 ## Support VS Code
 
 Le dossier `vscode-extension/` contient le manifeste d’extension, la grammaire TextMate, la configuration de langage et le thème d’icônes FBP. La commande `fbp -init` copie ce support dans le dossier d’extensions de VS Code. La version 1.2.0 ajoute l’autocomplétion des fonctions intégrées et des symboles du fichier, ainsi que les diagnostics de syntaxe dans l’éditeur. Le logo du thème d’icônes se trouve dans `vscode-extension/assets/fbp-logo.svg`.
+
+## Licence
+
+FBP est distribué sous la **Mist Max Proprietary License (MMPL) v1.0**. L'utilisation commerciale et la redistribution du logiciel original sont autorisées sous conditions. La modification est permise pour un usage personnel ou interne, mais la redistribution de versions modifiées nécessite une autorisation écrite préalable. Consulte le fichier [LICENSE](./LICENSE) pour le texte complet.
