@@ -43,7 +43,8 @@
     "prepublishOnly": "npm test",
     "start": "node dist/cli.js",
     "dev": "ts-node src/cli.ts",
-    "test": "npm run build && node --test tests/*.test.cjs"
+    "test": "npm run build && node --test tests/*.test.cjs",
+    "test:simu": "npm run build && node scripts/test-simu.cjs"
   },
   "engines": {
     "node": ">=20"
