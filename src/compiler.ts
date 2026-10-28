@@ -403,8 +403,8 @@ export class FbpCompiler {
           const guild = resolvedReaction.message.guild;
           if (!guild) return;
           renderDiscordEvent("reaction:ajout", {
-            pseudo: user.username,
-            membre: user.username,
+            pseudo: user.username ?? "inconnu",
+            membre: user.username ?? "inconnu",
             id: user.id,
             serveur: guild.name,
             salon: ("name" in resolvedReaction.message.channel ? resolvedReaction.message.channel.name : resolvedReaction.message.channelId) ?? "inconnu",
@@ -420,8 +420,8 @@ export class FbpCompiler {
           const guild = resolvedReaction.message.guild;
           if (!guild) return;
           renderDiscordEvent("reaction:retrait", {
-            pseudo: user.username,
-            membre: user.username,
+            pseudo: user.username ?? "inconnu",
+            membre: user.username ?? "inconnu",
             id: user.id,
             serveur: guild.name,
             salon: ("name" in resolvedReaction.message.channel ? resolvedReaction.message.channel.name : resolvedReaction.message.channelId) ?? "inconnu",
@@ -439,8 +439,8 @@ export class FbpCompiler {
           if (interactionType === "formulaire" && !interaction.isModalSubmit()) return;
           const user = interaction.user;
           const values: Record<string, string> = {
-            pseudo: user.username,
-            membre: user.username,
+            pseudo: user.username ?? "inconnu",
+            membre: user.username ?? "inconnu",
             id: user.id,
             serveur: interaction.guild?.name ?? "Message privé",
             salon: (interaction.channel && "name" in interaction.channel ? interaction.channel.name : interaction.channelId) ?? "inconnu",
