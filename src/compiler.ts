@@ -389,7 +389,7 @@ export class FbpCompiler {
             membre: message.author.username,
             id: message.author.id,
             serveur: message.guild.name,
-            salon: " #" + (message.channel.isTextBased() && "name" in message.channel ? message.channel.name : message.channelId),
+            salon: " #" + (message.channel.isTextBased() && "name" in message.channel ? message.channel.name : message.channelId ?? "inconnu"),
             message: message.content || "[message sans texte]",
             message_id: message.id,
             lien: message.url
@@ -398,18 +398,18 @@ export class FbpCompiler {
 
       client.on("messageReactionAdd", async (reaction, user) => {
           if (user.bot) return;
-          if (reaction.partial) reaction = await reaction.fetch().catch(() => null) as typeof reaction;
-          if (!reaction) return;
-          const guild = reaction.message.guild;
+          const resolvedReaction = reaction.partial ? await reaction.fetch().catch(() => null) : reaction;
+          if (!resolvedReaction) return;
+          const guild = resolvedReaction.message.guild;
           if (!guild) return;
           renderDiscordEvent("reaction:ajout", {
             pseudo: user.username,
             membre: user.username,
             id: user.id,
             serveur: guild.name,
-            salon: "name" in reaction.message.channel ? reaction.message.channel.name : reaction.message.channelId,
-            reaction: reaction.emoji.toString(),
-            message_id: reaction.message.id
+            salon: "name" in resolvedReaction.message.channel ? resolvedReaction.message.channel.name : resolvedReaction.message.channelId ?? "inconnu",
+            reaction: resolvedReaction.emoji.toString(),
+            message_id: resolvedReaction.message.id
           });
         });
 
@@ -447,7 +447,7 @@ export class FbpCompiler {
             custom_id: "customId" in interaction ? interaction.customId : "inconnu",
             valeurs: interaction.isAnySelectMenu() ? interaction.values.join(", ") : "",
             formulaire: interaction.isModalSubmit()
-              ? interaction.fields.fields.map(field => field.customId + ": " + field.value).join(" | ")
+              ? interaction.fields.fields.map(field => field.customId + ": " + ("value" in field ? field.value : field.values.join(", "))).join(" | ")
               : ""
           };
           renderDiscordEvent(key, values);
