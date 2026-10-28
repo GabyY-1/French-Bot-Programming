@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { FbpError } from "./errors";
-import { Client, EmbedBuilder, GatewayIntentBits, PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
+import { Client, EmbedBuilder, GatewayIntentBits, Partials, PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
 import dotenv from "dotenv";
 
 type ValueType = "texte" | "nombre" | "booleen" | "inconnu";
@@ -157,8 +157,13 @@ export class FbpCompiler {
   private discordClient?: Client;
   private discordCommands = new Map<string, DiscordResponse>();
   private discordMemberEvents = new Map<string, string>();
+  private discordEvents = new Map<string, string>();
   private useGuildMembersIntent = false;
   private useGuildPresencesIntent = false;
+  private useMessageContentIntent = false;
+  private useMessageReactionsIntent = false;
+  private useVoiceStatesIntent = false;
+  private useGuildModerationIntent = false;
 
   constructor(options: RunOptions = {}) {
     this.output = options.onOutput ?? (value => console.log(value));
@@ -205,6 +210,15 @@ export class FbpCompiler {
           : rawName;
         if (["arrivee", "depart", "pseudo", "roles", "statut"].includes(eventName)) this.useGuildMembersIntent = true;
         if (eventName === "statut") this.useGuildPresencesIntent = true;
+      } else if (statement.kind === "call" && statement.name === "evenementMessage") {
+        this.useMessageContentIntent = true;
+      } else if (statement.kind === "call" && statement.name === "evenementReaction") {
+        this.useMessageReactionsIntent = true;
+      } else if (statement.kind === "call" && statement.name === "evenementVocal") {
+        this.useVoiceStatesIntent = true;
+      } else if (statement.kind === "call" && statement.name === "evenementServeur") {
+        const eventName = statement.args[0]?.replace(/^["']|["']$/g, "") ?? "";
+        if (["bannissement", "debannissement", "moderation"].includes(eventName)) this.useGuildModerationIntent = true;
       } else if (statement.kind === "import") {
         const importedPath = path.resolve(baseDir, statement.source);
         if (!visited.has(importedPath) && fs.existsSync(importedPath) && fs.statSync(importedPath).isFile()) {
@@ -223,6 +237,10 @@ export class FbpCompiler {
     const statements = parseFile(absolute, fs.readFileSync(absolute, "utf8"));
     this.useGuildMembersIntent = false;
     this.useGuildPresencesIntent = false;
+    this.useMessageContentIntent = false;
+    this.useMessageReactionsIntent = false;
+    this.useVoiceStatesIntent = false;
+    this.useGuildModerationIntent = false;
     this.collectMemberIntents(statements, path.dirname(absolute), new Set([absolute]));
     this.execute(statements, path.dirname(absolute));
   }
@@ -288,9 +306,16 @@ export class FbpCompiler {
       const intents = [
         GatewayIntentBits.Guilds,
         ...(this.useGuildMembersIntent ? [GatewayIntentBits.GuildMembers] : []),
-        ...(this.useGuildPresencesIntent ? [GatewayIntentBits.GuildPresences] : [])
+        ...(this.useGuildPresencesIntent ? [GatewayIntentBits.GuildPresences] : []),
+        ...(this.useMessageContentIntent ? [GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] : []),
+        ...(this.useMessageReactionsIntent ? [GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMessageReactions] : []),
+        ...(this.useVoiceStatesIntent ? [GatewayIntentBits.GuildVoiceStates] : []),
+        ...(this.useGuildModerationIntent ? [GatewayIntentBits.GuildModeration] : [])
       ];
-      const client = new Client({ intents });
+      const client = new Client({
+        intents,
+        partials: this.useMessageReactionsIntent ? [Partials.Message, Partials.Channel, Partials.Reaction, Partials.User] : []
+      });
       this.discordClient = client;
 
       const renderMemberEvent = (template: string, member: import("discord.js").GuildMember | import("discord.js").PartialGuildMember, extra: Record<string, string> = {}) =>
@@ -349,6 +374,156 @@ export class FbpCompiler {
           }));
         }
       });
+
+
+      const renderDiscordEvent = (key: string, values: Record<string, string>) => {
+        const template = this.discordEvents.get(key);
+        if (!template) return;
+        this.output(template.replace(/\{\{([a-z0-9_-]{1,32})\}\}/g, (match, name: string) => values[name] ?? match));
+      };
+
+      if (this.discordEvents.has("message:recu")) {
+        client.on("messageCreate", message => {
+          if (message.author.bot || !message.guild) return;
+          renderDiscordEvent("message:recu", {
+            pseudo: message.member?.displayName ?? message.author.username,
+            membre: message.author.username,
+            id: message.author.id,
+            serveur: message.guild.name,
+            salon: " #" + (message.channel.isTextBased() && "name" in message.channel ? message.channel.name : message.channelId),
+            message: message.content || "[message sans texte]",
+            message_id: message.id,
+            lien: message.url
+          });
+        });
+      }
+
+      if (this.discordEvents.has("reaction:ajout")) {
+        client.on("messageReactionAdd", async (reaction, user) => {
+          if (user.bot) return;
+          if (reaction.partial) reaction = await reaction.fetch().catch(() => null) as typeof reaction;
+          if (!reaction) return;
+          const guild = reaction.message.guild;
+          if (!guild) return;
+          renderDiscordEvent("reaction:ajout", {
+            pseudo: user.username,
+            membre: user.username,
+            id: user.id,
+            serveur: guild.name,
+            salon: "name" in reaction.message.channel ? reaction.message.channel.name : reaction.message.channelId,
+            reaction: reaction.emoji.toString(),
+            message_id: reaction.message.id
+          });
+        });
+      }
+
+      if (this.discordEvents.has("reaction:retrait")) {
+        client.on("messageReactionRemove", async (reaction, user) => {
+          if (user.bot) return;
+          if (reaction.partial) reaction = await reaction.fetch().catch(() => null) as typeof reaction;
+          if (!reaction) return;
+          const guild = reaction.message.guild;
+          if (!guild) return;
+          renderDiscordEvent("reaction:retrait", {
+            pseudo: user.username,
+            membre: user.username,
+            id: user.id,
+            serveur: guild.name,
+            salon: "name" in reaction.message.channel ? reaction.message.channel.name : reaction.message.channelId,
+            reaction: reaction.emoji.toString(),
+            message_id: reaction.message.id
+          });
+        });
+      }
+
+      for (const interactionType of ["bouton", "menu", "formulaire"] as const) {
+        const key = "interaction:" + interactionType;
+        if (!this.discordEvents.has(key)) continue;
+        client.on("interactionCreate", interaction => {
+          if (interactionType === "bouton" && !interaction.isButton()) return;
+          if (interactionType === "menu" && !interaction.isStringSelectMenu() && !interaction.isUserSelectMenu() &&
+              !interaction.isRoleSelectMenu() && !interaction.isChannelSelectMenu() && !interaction.isMentionableSelectMenu()) return;
+          if (interactionType === "formulaire" && !interaction.isModalSubmit()) return;
+          const user = interaction.user;
+          const values: Record<string, string> = {
+            pseudo: user.username,
+            membre: user.username,
+            id: user.id,
+            serveur: interaction.guild?.name ?? "Message privé",
+            salon: interaction.channel && "name" in interaction.channel ? interaction.channel.name : interaction.channelId ?? "inconnu",
+            custom_id: "customId" in interaction ? interaction.customId : "inconnu",
+            valeurs: interaction.isAnySelectMenu() ? interaction.values.join(", ") : "",
+            formulaire: interaction.isModalSubmit()
+              ? interaction.fields.fields.map(field => field.customId + ": " + field.value).join(" | ")
+              : ""
+          };
+          renderDiscordEvent(key, values);
+        });
+      }
+
+      if (this.discordEvents.has("vocal:arrivee") || this.discordEvents.has("vocal:depart") || this.discordEvents.has("vocal:changement")) {
+        client.on("voiceStateUpdate", (before, after) => {
+          const member = after.member ?? before.member;
+          if (!member) return;
+          const eventName = !before.channelId && after.channelId
+            ? "arrivee"
+            : before.channelId && !after.channelId
+              ? "depart"
+              : "changement";
+          if (!this.discordEvents.has("vocal:" + eventName)) return;
+          renderDiscordEvent("vocal:" + eventName, {
+            pseudo: member.displayName,
+            membre: member.user.username,
+            id: member.id,
+            serveur: after.guild.name,
+            ancien: before.channel?.name ?? "Aucun salon vocal",
+            nouveau: after.channel?.name ?? "Aucun salon vocal",
+            salon: after.channel?.name ?? before.channel?.name ?? "Aucun salon vocal"
+          });
+        });
+      }
+
+      const serverEvents: Array<[string, string]> = [
+        ["channelCreate", "salon_cree"],
+        ["channelDelete", "salon_supprime"],
+        ["channelUpdate", "salon_modifie"],
+        ["roleCreate", "role_cree"],
+        ["roleDelete", "role_supprime"],
+        ["roleUpdate", "role_modifie"],
+        ["guildBanAdd", "bannissement"],
+        ["guildBanRemove", "debannissement"],
+        ["guildUpdate", "serveur_modifie"]
+      ];
+      for (const [discordEvent, fbpEvent] of serverEvents) {
+        if (!this.discordEvents.has("serveur:" + fbpEvent)) continue;
+        client.on(discordEvent as never, ((...args: unknown[]) => {
+          const first = args[0] as { name?: string; id?: string; guild?: { name: string }; user?: { username: string; id: string }; reason?: string };
+          const second = args[1] as { name?: string; id?: string; guild?: { name: string }; user?: { username: string; id: string }; reason?: string } | undefined;
+          const target = second ?? first;
+          renderDiscordEvent("serveur:" + fbpEvent, {
+            evenement: fbpEvent,
+            nom: target.name ?? first.name ?? "inconnu",
+            id: target.id ?? first.id ?? "inconnu",
+            serveur: target.guild?.name ?? first.guild?.name ?? "Serveur",
+            pseudo: target.user?.username ?? first.user?.username ?? "inconnu",
+            membre: target.user?.username ?? first.user?.username ?? "inconnu",
+            raison: target.reason ?? first.reason ?? "Aucun motif"
+          });
+        }) as never);
+      }
+
+      if (this.discordEvents.has("serveur:moderation")) {
+        client.on("guildAuditLogEntryCreate", (entry, guild) => {
+          renderDiscordEvent("serveur:moderation", {
+            evenement: entry.action.toString(),
+            id: entry.id,
+            serveur: guild.name,
+            pseudo: entry.executor?.username ?? "inconnu",
+            membre: entry.target?.toString() ?? "inconnu",
+            raison: entry.reason ?? "Aucun motif"
+          });
+        });
+      }
 
       client.once("ready", async () => {
         try {
@@ -1061,6 +1236,32 @@ export class FbpCompiler {
         ephemeral: true,
         options: []
       });
+      return;
+    }
+    if (name === "evenementMessage" || name === "evenementReaction" || name === "evenementInteraction" || name === "evenementVocal" || name === "evenementServeur") {
+      if (!this.discordClient) throw new FbpError("Appelle connexion() avant de déclarer un événement Discord.", undefined, line);
+      if (values.length !== 2 || values.some(value => typeof value !== "string")) {
+        throw new FbpError("Utilisation : evenementMessage/evenementReaction/evenementInteraction/evenementVocal/evenementServeur(\"type\", \"message\").", undefined, line);
+      }
+      const [eventName, template] = values as string[];
+      const eventTypes: Record<string, string[]> = {
+        evenementMessage: ["recu"],
+        evenementReaction: ["ajout", "retrait"],
+        evenementInteraction: ["bouton", "menu", "formulaire"],
+        evenementVocal: ["arrivee", "depart", "changement"],
+        evenementServeur: ["salon_cree", "salon_supprime", "salon_modifie", "role_cree", "role_supprime", "role_modifie", "bannissement", "debannissement", "serveur_modifie", "moderation"]
+      };
+      if (!eventTypes[name].includes(eventName)) {
+        throw new FbpError("Type d'événement inconnu pour " + name + " : " + eventName + ".", undefined, line);
+      }
+      const prefixes: Record<string, string> = {
+        evenementMessage: "message",
+        evenementReaction: "reaction",
+        evenementInteraction: "interaction",
+        evenementVocal: "vocal",
+        evenementServeur: "serveur"
+      };
+      this.discordEvents.set(prefixes[name] + ":" + eventName, template);
       return;
     }
     if (name === "evenementMembre") {
