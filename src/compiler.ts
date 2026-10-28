@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { FbpError } from "./errors";
+import { formatDiscordError } from "./discord-errors";
 import { ApplicationCommandType, Client, ContextMenuCommandBuilder, EmbedBuilder, GatewayIntentBits, GuildScheduledEventEntityType, GuildScheduledEventPrivacyLevel, Partials, PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
 import dotenv from "dotenv";
 
@@ -677,7 +678,7 @@ export class FbpCompiler {
           this.output("Connecté à Discord en tant que " + (client.user?.tag ?? "bot") + ".");
           this.output("Commandes FBP enregistrées : " + (commands.length + contextCommands.length) + ".");
         } catch (error: unknown) {
-          this.output("Enregistrement des commandes slash impossible : " + (error instanceof Error ? error.message : String(error)));
+          this.output("Enregistrement des commandes slash impossible : " + formatDiscordError(error));
         }
       });
 
@@ -1164,14 +1165,14 @@ export class FbpCompiler {
           }
         } catch (error: unknown) {
           const message = "Une erreur est survenue pendant l'exécution de cette commande.";
-          this.output("Erreur Discord : " + (error instanceof Error ? error.message : String(error)));
+          this.output("Erreur Discord : " + formatDiscordError(error));
           if (!interaction.replied && !interaction.deferred) {
             await interaction.reply({ content: message, ephemeral: true }).catch(() => undefined);
           }
         }
       });
 
-      void client.login(token).catch((error: unknown) => this.output("Connexion Discord impossible : " + (error instanceof Error ? error.message : String(error))));
+      void client.login(token).catch((error: unknown) => this.output("Connexion Discord impossible : " + formatDiscordError(error)));
       return;
     }
     if (name === "commande") {
@@ -1534,9 +1535,11 @@ export class FbpCompiler {
       void this.discordClient.channels.fetch(channelId).then(async channel => {
         if (!channel || !channel.isVoiceBased() || !("guild" in channel) || !channel.guild) throw new Error("Le salon indiqué doit être un salon vocal de serveur.");
         const guild = channel.guild as import("discord.js").Guild;
+        const botMember = guild.members.me;
+        if (!botMember?.permissions.has(PermissionFlagsBits.ManageEvents)) throw new Error("Le bot doit disposer de la permission Gérer les événements.");
         const options = { name: eventName, description: description || undefined, scheduledStartTime: start, privacyLevel: GuildScheduledEventPrivacyLevel.GuildOnly, entityType: GuildScheduledEventEntityType.Voice, channel: channel.id } as Parameters<typeof guild.scheduledEvents.create>[0];
         return guild.scheduledEvents.create(options) as any;
-      }).then((event: { name: string; id: string }) => this.output("Événement créé : " + event.name + " (ID " + event.id + ").")).catch(error => this.output("Échec de la création de l’événement : " + (error instanceof Error ? error.message : String(error))));
+      }).then((event: { name: string; id: string }) => this.output("Événement créé : " + event.name + " (ID " + event.id + ").")).catch(error => this.output("Échec de la création de l’événement : " + formatDiscordError(error)));
       return;
     }
     if (name === "messagePrive") {
@@ -1544,7 +1547,7 @@ export class FbpCompiler {
       if (values.length !== 2 || values.some(v => typeof v !== "string")) throw new FbpError('Utilisation : messagePrive("ID_MEMBRE", "message").', undefined, line);
       const [userId, content] = values as string[];
       if (!/^\d{17,20}$/.test(userId) || !content.trim() || content.length > 2000) throw new FbpError("Identifiant Discord ou message invalide.", undefined, line);
-      void this.discordClient.users.fetch(userId).then(user => user.send({ content })).then(() => this.output("Message privé envoyé.")).catch(error => this.output("Échec du message privé : " + String(error)));
+      void this.discordClient.users.fetch(userId).then(user => user.send({ content })).then(() => this.output("Message privé envoyé.")).catch(error => this.output("Échec du message privé : " + formatDiscordError(error)));
       return;
     }
     if (name === "invitationCreer") {
@@ -1554,8 +1557,12 @@ export class FbpCompiler {
       if (!/^\d{17,20}$/.test(channelId) || !Number.isInteger(duration) || (duration as number) < 0 || (duration as number) > 604800) throw new FbpError("Salon ou durée d'invitation invalide.", undefined, line);
       void this.discordClient.channels.fetch(channelId).then(channel => {
         if (!channel || !("createInvite" in channel) || typeof channel.createInvite !== "function") throw new Error("Ce salon ne permet pas de créer une invitation.");
+        if (!("guild" in channel) || !channel.guild) throw new Error("Les invitations sont disponibles uniquement dans un serveur.");
+        const botMember = channel.guild.members.me;
+        const guildChannel = channel as import("discord.js").GuildChannel;
+        if (!botMember || !guildChannel.permissionsFor(botMember).has(PermissionFlagsBits.CreateInstantInvite)) throw new Error("Le bot doit disposer de la permission Créer une invitation dans ce salon.");
         return channel.createInvite({ maxAge: duration as number, unique: true });
-      }).then(invite => this.output("Invitation créée : " + invite.url)).catch(error => this.output("Échec de l'invitation : " + String(error)));
+      }).then(invite => this.output("Invitation créée : " + invite.url)).catch(error => this.output("Échec de l'invitation : " + formatDiscordError(error)));
       return;
     }
     if (name === "sondageCreer") {
@@ -1565,8 +1572,13 @@ export class FbpCompiler {
       if (!/^\d{17,20}$/.test(channelId) || !question.trim() || question.length > 300 || answers.length < 2 || answers.length > 5 || answers.some(a => !a.trim() || a.length > 55)) throw new FbpError("Le sondage doit contenir une question et de 2 à 5 choix valides.", undefined, line);
       void this.discordClient.channels.fetch(channelId).then(async channel => {
         if (!channel || !("send" in channel) || typeof channel.send !== "function") throw new Error("Ce salon ne permet pas de publier un sondage.");
+        if (!("guild" in channel) || !channel.guild) throw new Error("Les sondages sont disponibles uniquement dans un serveur.");
+        const botMember = channel.guild.members.me;
+        const guildChannel = channel as import("discord.js").GuildChannel;
+        const permissions = botMember ? guildChannel.permissionsFor(botMember) : null;
+        if (!permissions?.has([PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.SendPolls])) throw new Error("Le bot doit pouvoir voir le salon, envoyer des messages et créer des sondages.");
         await channel.send({ poll: { question: { text: question }, answers: answers.map(text => ({ text })), duration: 24, allowMultiselect: false } });
-      }).then(() => this.output("Sondage publié.")).catch(error => this.output("Échec du sondage : " + String(error)));
+      }).then(() => this.output("Sondage publié.")).catch(error => this.output("Échec du sondage : " + formatDiscordError(error)));
       return;
     }
     if (name === "webhookCreer") {
@@ -1576,8 +1588,12 @@ export class FbpCompiler {
       if (!/^\d{17,20}$/.test(channelId) || !webhookName.trim() || webhookName.length > 80) throw new FbpError("Salon ou nom de webhook invalide.", undefined, line);
       void this.discordClient.channels.fetch(channelId).then(channel => {
         if (!channel || !("createWebhook" in channel) || typeof channel.createWebhook !== "function") throw new Error("Ce salon ne permet pas de créer un webhook.");
+        if (!("guild" in channel) || !channel.guild) throw new Error("Les webhooks sont disponibles uniquement dans un serveur.");
+        const botMember = channel.guild.members.me;
+        const guildChannel = channel as import("discord.js").GuildChannel;
+        if (!botMember || !guildChannel.permissionsFor(botMember).has(PermissionFlagsBits.ManageWebhooks)) throw new Error("Le bot doit disposer de la permission Gérer les webhooks dans ce salon.");
         return channel.createWebhook({ name: webhookName });
-      }).then(webhook => this.output("Webhook créé : " + webhook.url)).catch(error => this.output("Échec du webhook : " + String(error)));
+      }).then(webhook => this.output("Webhook créé : " + webhook.url)).catch(error => this.output("Échec du webhook : " + formatDiscordError(error)));
       return;
     }
     if (name === "webhookEnvoyer") {
@@ -1586,7 +1602,7 @@ export class FbpCompiler {
       let parsed: URL;
       try { parsed = new URL(webhookUrl); } catch { throw new FbpError("URL de webhook invalide.", undefined, line); }
       if (parsed.protocol !== "https:" || !["discord.com", "discordapp.com"].includes(parsed.hostname) || !parsed.pathname.startsWith("/api/webhooks/") || !content.trim() || content.length > 2000) throw new FbpError("URL Discord ou message de webhook invalide.", undefined, line);
-      void import("discord.js").then(({ WebhookClient }) => new WebhookClient({ url: webhookUrl }).send({ content })).then(() => this.output("Message envoyé par webhook.")).catch(error => this.output("Échec du webhook : " + String(error)));
+      void import("discord.js").then(({ WebhookClient }) => new WebhookClient({ url: webhookUrl }).send({ content })).then(() => this.output("Message envoyé par webhook.")).catch(error => this.output("Échec du webhook : " + formatDiscordError(error)));
       return;
     }
     if (name === "evenementPrive") {
@@ -1609,7 +1625,7 @@ export class FbpCompiler {
         const connection = voice.joinVoiceChannel({ channelId: channel.id, guildId: channel.guild.id, adapterCreator: channel.guild.voiceAdapterCreator, selfDeaf: true });
         await voice.entersState(connection, voice.VoiceConnectionStatus.Ready, 15_000);
         this.output("Connecté au salon vocal : " + channel.name);
-      }).catch(error => this.output("Échec de la connexion vocale : " + (error instanceof Error ? error.message : String(error))));
+      }).catch(error => this.output("Échec de la connexion vocale : " + formatDiscordError(error)));
       return;
     }
     if (name === "vocalQuitter") {
@@ -1622,7 +1638,7 @@ export class FbpCompiler {
         if (!connection) throw new Error("Le bot n'est connecté à aucun salon vocal correspondant.");
         connection.destroy();
         this.output("Connexion vocale fermée.");
-      }).catch(error => this.output("Échec de la déconnexion vocale : " + (error instanceof Error ? error.message : String(error))));
+      }).catch(error => this.output("Échec de la déconnexion vocale : " + formatDiscordError(error)));
       return;
     }
     if (name === "ping") {
