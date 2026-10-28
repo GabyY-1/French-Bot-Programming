@@ -337,121 +337,31 @@ export class FbpCompiler {
               );
             }
             if (response.type === "text" && response.contentAction) {
-            if (!interaction.inGuild() || !interaction.guild) {
-              await interaction.reply({ content: "Cette commande doit être utilisée sur un serveur.", ephemeral: true });
-              return;
-            }
-            const action = response.contentAction;
-            const guild = interaction.guild;
-            const actor = await guild.members.fetch(interaction.user.id).catch(() => null);
-            const permission = action === "create-channel" || action === "delete-channel" || action === "rename-channel" || action === "topic-channel"
-              ? PermissionFlagsBits.ManageChannels
-              : action === "pin" || action === "unpin"
-                ? PermissionFlagsBits.ManageMessages
-                : action === "delete" || action === "edit"
+              const action = response.contentAction;
+              const permission = action === "create-channel" || action === "delete-channel" || action === "rename-channel" || action === "topic-channel"
+                ? PermissionFlagsBits.ManageChannels
+                : action === "pin" || action === "unpin" || action === "delete" || action === "edit"
                   ? PermissionFlagsBits.ManageMessages
                   : PermissionFlagsBits.SendMessages;
-            if (!actor?.permissions.has(permission)) {
-              await interaction.reply({ content: "Tu n'as pas la permission nécessaire pour cette action.", ephemeral: true });
-              return;
-            }
-            const botMember = guild.members.me;
-            if (!botMember?.permissions.has(permission)) {
-              await interaction.reply({ content: "Le bot ne possède pas la permission nécessaire.", ephemeral: true });
-              return;
-            }
-            if (action === "create-channel") {
-              const name = interaction.options.getString("nom", true).trim();
-              const type = interaction.options.getString("type", true);
-              if (!/^[a-z0-9-_]{1,100}$/.test(name)) {
-                await interaction.reply({ content: "Le nom doit contenir entre 1 et 100 caractères minuscules, chiffres, tirets ou underscores.", ephemeral: true });
-                return;
-              }
-              const channel = await guild.channels.create({ name, type: type === "vocal" ? 2 : 0, reason: "Création via FBP" });
-              await interaction.reply({ content: "Salon créé : " + channel.toString(), ephemeral: true });
-              return;
-            }
-            const selectedChannel = interaction.options.getChannel("salon", action !== "send");
-            if (action === "delete-channel" || action === "rename-channel" || action === "topic-channel") {
-              if (!selectedChannel || !("guild" in selectedChannel) || selectedChannel.guild.id !== guild.id) {
-                await interaction.reply({ content: "Salon invalide.", ephemeral: true });
-                return;
-              }
-              if (action === "delete-channel") {
-                await selectedChannel.delete("Suppression via FBP");
-                await interaction.reply({ content: "Salon supprimé.", ephemeral: true });
-              } else if (action === "rename-channel") {
-                const newName = interaction.options.getString("nom", true).trim();
-                if (!/^[a-z0-9-_]{1,100}$/.test(newName)) {
-                  await interaction.reply({ content: "Le nom du salon est invalide.", ephemeral: true });
-                  return;
-                }
-                await selectedChannel.setName(newName, "Modification via FBP");
-                await interaction.reply({ content: "Salon renommé.", ephemeral: true });
+              builder.setDefaultMemberPermissions(permission);
+              if (action === "create-channel") {
+                builder.addStringOption(option => option.setName("nom").setDescription("Nom du salon").setRequired(true));
+                builder.addStringOption(option => option.setName("type").setDescription("Type de salon").addChoices({ name: "Texte", value: "texte" }, { name: "Vocal", value: "vocal" }).setRequired(true));
+              } else if (action === "delete-channel" || action === "rename-channel" || action === "topic-channel") {
+                builder.addChannelOption(option => option.setName("salon").setDescription("Salon concerné").setRequired(true));
+                if (action === "rename-channel") builder.addStringOption(option => option.setName("nom").setDescription("Nouveau nom").setRequired(true));
+                if (action === "topic-channel") builder.addStringOption(option => option.setName("sujet").setDescription("Nouveau sujet").setRequired(true));
               } else {
-                if (!("setTopic" in selectedChannel) || typeof selectedChannel.setTopic !== "function") {
-                  await interaction.reply({ content: "Ce type de salon ne prend pas en charge de sujet.", ephemeral: true });
-                  return;
+                builder.addChannelOption(option => option.setName("salon").setDescription("Salon concerné").setRequired(action !== "send"));
+                if (action === "send") builder.addStringOption(option => option.setName("message").setDescription("Message à envoyer").setRequired(true));
+                else {
+                  builder.addStringOption(option => option.setName("message_id").setDescription("Identifiant du message").setRequired(true));
+                  if (action === "edit") builder.addStringOption(option => option.setName("contenu").setDescription("Nouveau contenu").setRequired(true));
+                  if (action === "react") builder.addStringOption(option => option.setName("emoji").setDescription("Emoji à ajouter").setRequired(true));
                 }
-                await selectedChannel.setTopic(interaction.options.getString("sujet", true).slice(0, 1024), "Modification via FBP");
-                await interaction.reply({ content: "Sujet du salon mis à jour.", ephemeral: true });
               }
-              return;
             }
-            const channel = selectedChannel ?? interaction.channel;
-            if (!channel || !("send" in channel) || typeof channel.send !== "function") {
-              await interaction.reply({ content: "Ce salon ne permet pas d'envoyer des messages.", ephemeral: true });
-              return;
-            }
-            if (action === "send") {
-              const content = interaction.options.getString("message", true);
-              if (content.length > 2000) {
-                await interaction.reply({ content: "Un message Discord ne peut pas dépasser 2 000 caractères.", ephemeral: true });
-                return;
-              }
-              const sent = await channel.send({ content });
-              await interaction.reply({ content: "Message envoyé : " + sent.url, ephemeral: true });
-              return;
-            }
-            const messageId = interaction.options.getString("message_id", true).trim();
-            if (!/^\d{17,20}$/.test(messageId) || !("messages" in channel) || !channel.messages || typeof channel.messages.fetch !== "function") {
-              await interaction.reply({ content: "Identifiant de message ou salon invalide.", ephemeral: true });
-              return;
-            }
-            const message = await channel.messages.fetch(messageId).catch(() => null);
-            if (!message) {
-              await interaction.reply({ content: "Message introuvable dans ce salon.", ephemeral: true });
-              return;
-            }
-            if (action === "edit") {
-              const content = interaction.options.getString("contenu", true);
-              if (content.length > 2000) {
-                await interaction.reply({ content: "Un message Discord ne peut pas dépasser 2 000 caractères.", ephemeral: true });
-                return;
-              }
-              if (message.author.id !== interaction.client.user?.id) {
-                await interaction.reply({ content: "Le bot ne peut modifier que ses propres messages.", ephemeral: true });
-                return;
-              }
-              await message.edit({ content });
-              await interaction.reply({ content: "Message modifié.", ephemeral: true });
-            } else if (action === "delete") {
-              await message.delete();
-              await interaction.reply({ content: "Message supprimé.", ephemeral: true });
-            } else if (action === "react") {
-              const emoji = interaction.options.getString("emoji", true);
-              await message.react(emoji);
-              await interaction.reply({ content: "Réaction ajoutée.", ephemeral: true });
-            } else if (action === "pin") {
-              await message.pin();
-              await interaction.reply({ content: "Message épinglé.", ephemeral: true });
-            } else if (action === "unpin") {
-              await message.unpin();
-              await interaction.reply({ content: "Message désépinglé.", ephemeral: true });
-            }
-            return;
-          }
-          if (response.type === "text" && response.roleAction) {
+            if (response.type === "text" && response.roleAction) {
               builder.setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles);
               builder.addUserOption(option => option.setName("membre").setDescription("Membre concerné").setRequired(true));
               builder.addRoleOption(option => option.setName("role").setDescription("Rôle à gérer ou vérifier").setRequired(true));
@@ -670,6 +580,118 @@ export class FbpCompiler {
               nickname: "Surnom mis à jour."
             };
             await interaction.reply({ content: labels[action] ?? "Action effectuée.", ephemeral: true });
+            return;
+          }
+          if (response.type === "text" && response.contentAction) {
+            if (!interaction.inGuild() || !interaction.guild) {
+              await interaction.reply({ content: "Cette commande doit être utilisée sur un serveur.", ephemeral: true });
+              return;
+            }
+            const action = response.contentAction;
+            const guild = interaction.guild;
+            const actor = await guild.members.fetch(interaction.user.id).catch(() => null);
+            const permission = action === "create-channel" || action === "delete-channel" || action === "rename-channel" || action === "topic-channel"
+              ? PermissionFlagsBits.ManageChannels
+              : action === "pin" || action === "unpin" || action === "delete" || action === "edit"
+                ? PermissionFlagsBits.ManageMessages
+                : PermissionFlagsBits.SendMessages;
+            if (!actor?.permissions.has(permission)) {
+              await interaction.reply({ content: "Tu n'as pas la permission nécessaire pour cette action.", ephemeral: true });
+              return;
+            }
+            const botMember = guild.members.me;
+            if (!botMember?.permissions.has(permission)) {
+              await interaction.reply({ content: "Le bot ne possède pas la permission nécessaire.", ephemeral: true });
+              return;
+            }
+            if (action === "create-channel") {
+              const name = interaction.options.getString("nom", true).trim();
+              const type = interaction.options.getString("type", true);
+              if (!/^[a-z0-9-_]{1,100}$/.test(name)) {
+                await interaction.reply({ content: "Le nom du salon est invalide.", ephemeral: true });
+                return;
+              }
+              const channel = await guild.channels.create({ name, type: type === "vocal" ? 2 : 0, reason: "Création via FBP" });
+              await interaction.reply({ content: "Salon créé : " + channel.toString(), ephemeral: true });
+              return;
+            }
+            const selectedChannel = interaction.options.getChannel("salon", action !== "send");
+            if (action === "delete-channel" || action === "rename-channel" || action === "topic-channel") {
+              if (!selectedChannel || !("guild" in selectedChannel) || selectedChannel.guild.id !== guild.id) {
+                await interaction.reply({ content: "Salon invalide.", ephemeral: true });
+                return;
+              }
+              if (action === "delete-channel") {
+                await selectedChannel.delete("Suppression via FBP");
+                await interaction.reply({ content: "Salon supprimé.", ephemeral: true });
+              } else if (action === "rename-channel") {
+                const newName = interaction.options.getString("nom", true).trim();
+                if (!/^[a-z0-9-_]{1,100}$/.test(newName)) {
+                  await interaction.reply({ content: "Le nom du salon est invalide.", ephemeral: true });
+                  return;
+                }
+                await selectedChannel.setName(newName, "Modification via FBP");
+                await interaction.reply({ content: "Salon renommé.", ephemeral: true });
+              } else {
+                if (!("setTopic" in selectedChannel) || typeof selectedChannel.setTopic !== "function") {
+                  await interaction.reply({ content: "Ce type de salon ne prend pas en charge de sujet.", ephemeral: true });
+                  return;
+                }
+                await selectedChannel.setTopic(interaction.options.getString("sujet", true).slice(0, 1024), "Modification via FBP");
+                await interaction.reply({ content: "Sujet du salon mis à jour.", ephemeral: true });
+              }
+              return;
+            }
+            const channel = selectedChannel ?? interaction.channel;
+            if (!channel || !("send" in channel) || typeof channel.send !== "function") {
+              await interaction.reply({ content: "Ce salon ne permet pas d'envoyer des messages.", ephemeral: true });
+              return;
+            }
+            if (action === "send") {
+              const content = interaction.options.getString("message", true);
+              if (content.length > 2000) {
+                await interaction.reply({ content: "Un message Discord ne peut pas dépasser 2 000 caractères.", ephemeral: true });
+                return;
+              }
+              const sent = await channel.send({ content });
+              await interaction.reply({ content: "Message envoyé : " + sent.url, ephemeral: true });
+              return;
+            }
+            const messageId = interaction.options.getString("message_id", true).trim();
+            if (!/^\d{17,20}$/.test(messageId) || !("messages" in channel) || !channel.messages || typeof channel.messages.fetch !== "function") {
+              await interaction.reply({ content: "Identifiant de message ou salon invalide.", ephemeral: true });
+              return;
+            }
+            const message = await channel.messages.fetch(messageId).catch(() => null);
+            if (!message) {
+              await interaction.reply({ content: "Message introuvable dans ce salon.", ephemeral: true });
+              return;
+            }
+            if (action === "edit") {
+              const content = interaction.options.getString("contenu", true);
+              if (content.length > 2000) {
+                await interaction.reply({ content: "Un message Discord ne peut pas dépasser 2 000 caractères.", ephemeral: true });
+                return;
+              }
+              if (message.author.id !== interaction.client.user?.id) {
+                await interaction.reply({ content: "Le bot ne peut modifier que ses propres messages.", ephemeral: true });
+                return;
+              }
+              await message.edit({ content });
+              await interaction.reply({ content: "Message modifié.", ephemeral: true });
+            } else if (action === "delete") {
+              await message.delete();
+              await interaction.reply({ content: "Message supprimé.", ephemeral: true });
+            } else if (action === "react") {
+              await message.react(interaction.options.getString("emoji", true));
+              await interaction.reply({ content: "Réaction ajoutée.", ephemeral: true });
+            } else if (action === "pin") {
+              await message.pin();
+              await interaction.reply({ content: "Message épinglé.", ephemeral: true });
+            } else if (action === "unpin") {
+              await message.unpin();
+              await interaction.reply({ content: "Message désépinglé.", ephemeral: true });
+            }
             return;
           }
           if (response.type === "text" && response.roleAction) {
