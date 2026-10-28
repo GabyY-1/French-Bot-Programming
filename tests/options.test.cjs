@@ -148,12 +148,12 @@ test("les événements Discord de la version 1.3.2 sont déclarables", () => {
     'evenementServeur("salon_cree", "Salon créé : {{nom}}")',
     'evenementServeur("bannissement", "{{pseudo}} banni")',
     'evenementServeur("moderation", "{{evenement}} par {{pseudo}}")'
-  ].join("\\n")));
+  ].join("\n")));
 });
 
 test("un type d'événement Discord inconnu est refusé", () => {
   assert.throws(
-    () => runSource(['connexion()', 'evenementMessage("inconnu", "test")'].join("\\n")),
+    () => runSource(['connexion()', 'evenementMessage("inconnu", "test")'].join("\n")),
     /Type d'événement inconnu/
   );
 });
