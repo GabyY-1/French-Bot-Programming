@@ -494,6 +494,50 @@ export class FbpCompiler {
       this.discordCommands.set(commandName, { type: "text", content: response, deferred: true, options: [] });
       return;
     }
+    if (name === "sousCommande") {
+      if (values.length !== 4 || values.some(value => typeof value !== "string")) {
+        throw new FbpError('Utilisation : sousCommande("commande", "nom", "description", "réponse").', undefined, line);
+      }
+      const [commandName, subName, description, content] = values as string[];
+      const root = this.discordCommands.get(commandName);
+      if (!root || root.type !== "text") throw new FbpError("La commande parente doit être une commande texte déjà déclarée.", undefined, line);
+      if (!/^[a-z0-9_-]{1,32}$/.test(subName) || !description.trim() || description.length > 100) throw new FbpError("Le nom de la sous-commande ou sa description est invalide.", undefined, line);
+      if (root.options?.length || root.roleAction || root.adminOnly) throw new FbpError("Une commande avec sous-commandes ne peut pas avoir d'options ou de restrictions sur la commande parente.", undefined, line);
+      root.subcommands ??= [];
+      if (root.subcommands.some(item => item.name === subName) || root.groups?.length) throw new FbpError("Cette sous-commande existe déjà ou la commande utilise déjà des groupes.", undefined, line);
+      if (root.subcommands.length >= 25) throw new FbpError("Une commande ne peut pas contenir plus de 25 sous-commandes.", undefined, line);
+      root.subcommands.push({ name: subName, description, response: { type: "text", content, options: [] } });
+      return;
+    }
+    if (name === "groupeSousCommandes") {
+      if (values.length !== 3 || values.some(value => typeof value !== "string")) {
+        throw new FbpError('Utilisation : groupeSousCommandes("commande", "groupe", "description").', undefined, line);
+      }
+      const [commandName, groupName, description] = values as string[];
+      const root = this.discordCommands.get(commandName);
+      if (!root || root.type !== "text") throw new FbpError("La commande parente doit être une commande texte déjà déclarée.", undefined, line);
+      if (!/^[a-z0-9_-]{1,32}$/.test(groupName) || !description.trim() || description.length > 100) throw new FbpError("Le nom du groupe ou sa description est invalide.", undefined, line);
+      if (root.options?.length || root.roleAction || root.adminOnly || root.subcommands?.length) throw new FbpError("Une commande avec groupes ne peut pas avoir d'options ou de sous-commandes simples sur la commande parente.", undefined, line);
+      root.groups ??= [];
+      if (root.groups.some(item => item.name === groupName)) throw new FbpError("Ce groupe de sous-commandes existe déjà.", undefined, line);
+      if (root.groups.length >= 25) throw new FbpError("Une commande ne peut pas contenir plus de 25 groupes.", undefined, line);
+      root.groups.push({ name: groupName, description, subcommands: [] });
+      return;
+    }
+    if (name === "sousCommandeGroupe") {
+      if (values.length !== 5 || values.some(value => typeof value !== "string")) {
+        throw new FbpError('Utilisation : sousCommandeGroupe("commande", "groupe", "nom", "description", "réponse").', undefined, line);
+      }
+      const [commandName, groupName, subName, description, content] = values as string[];
+      const root = this.discordCommands.get(commandName);
+      const group = root?.groups?.find(item => item.name === groupName);
+      if (!root || !group) throw new FbpError("Le groupe de sous-commandes n'existe pas.", undefined, line);
+      if (!/^[a-z0-9_-]{1,32}$/.test(subName) || !description.trim() || description.length > 100) throw new FbpError("Le nom de la sous-commande ou sa description est invalide.", undefined, line);
+      if (group.subcommands.some(item => item.name === subName)) throw new FbpError("Cette sous-commande existe déjà dans ce groupe.", undefined, line);
+      if (group.subcommands.length >= 25) throw new FbpError("Un groupe ne peut pas contenir plus de 25 sous-commandes.", undefined, line);
+      group.subcommands.push({ name: subName, description, response: { type: "text", content, options: [] } });
+      return;
+    }
     if (name === "commandePrivee") {
       if (!this.discordClient) throw new FbpError("Appelle connexion() avant de déclarer une commande.", undefined, line);
       if (values.length !== 2 || typeof values[0] !== "string" || typeof values[1] !== "string") {
