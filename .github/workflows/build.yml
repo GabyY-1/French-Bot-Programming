@@ -17,6 +17,6 @@ jobs:
         with:
           node-version: 22
       - name: Installer les dépendances
-        run: npm install
+        run: npm install --ignore-scripts
       - name: Compiler et tester FBP
         run: npm test
