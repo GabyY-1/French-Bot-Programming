@@ -2,21 +2,33 @@
   "name": "fbp-language",
   "displayName": "FBP Language Support",
   "description": "Coloration syntaxique, autocomplétion, détection des erreurs et thème d'icônes FBP.",
-  "version": "1.2.6",
+  "version": "1.2.7",
   "publisher": "gabyy1",
   "engines": {
     "vscode": "^1.80.0"
   },
   "main": "./extension.js",
-  "categories": ["Programming Languages", "Themes"],
-  "extensionKind": ["workspace"],
-  "activationEvents": ["onLanguage:fbp"],
+  "categories": [
+    "Programming Languages",
+    "Themes"
+  ],
+  "extensionKind": [
+    "workspace"
+  ],
+  "activationEvents": [
+    "onLanguage:fbp"
+  ],
   "contributes": {
     "languages": [
       {
         "id": "fbp",
-        "aliases": ["FBP", "fbp"],
-        "extensions": [".fbp"],
+        "aliases": [
+          "FBP",
+          "fbp"
+        ],
+        "extensions": [
+          ".fbp"
+        ],
         "configuration": "./language-configuration.json"
       }
     ],
