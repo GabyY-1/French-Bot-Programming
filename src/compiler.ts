@@ -243,7 +243,19 @@ export class FbpCompiler {
             if (response.type === "text" && response.adminOnly) {
               builder.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
             }
-            for (const option of response.options ?? []) {
+            for (const subcommand of response.subcommands ?? []) {
+              builder.addSubcommand(item => item.setName(subcommand.name).setDescription(subcommand.description));
+            }
+            for (const group of response.groups ?? []) {
+              builder.addSubcommandGroup(groupBuilder => {
+                groupBuilder.setName(group.name).setDescription(group.description);
+                for (const subcommand of group.subcommands) {
+                  groupBuilder.addSubcommand(item => item.setName(subcommand.name).setDescription(subcommand.description));
+                }
+                return groupBuilder;
+              });
+            }
+            if (!(response.subcommands?.length || response.groups?.length)) for (const option of response.options ?? []) {
               const add = {
                 texte: () => builder.addStringOption(item => {
                   item.setName(option.name).setDescription(option.description).setRequired(option.required);
@@ -305,8 +317,21 @@ export class FbpCompiler {
           return;
         }
         if (!interaction.isChatInputCommand()) return;
-        const response = this.discordCommands.get(interaction.commandName);
-        if (response === undefined) return;
+        const rootResponse = this.discordCommands.get(interaction.commandName);
+        if (rootResponse === undefined) return;
+        let response: DiscordResponse = rootResponse;
+        if (rootResponse.subcommands?.length || rootResponse.groups?.length) {
+          const groupName = interaction.options.getSubcommandGroup(false);
+          const subcommandName = interaction.options.getSubcommand(false);
+          const nested = groupName
+            ? rootResponse.groups?.find(group => group.name === groupName)?.subcommands.find(subcommand => subcommand.name === subcommandName)
+            : rootResponse.subcommands?.find(subcommand => subcommand.name === subcommandName);
+          if (!nested) {
+            await interaction.reply({ content: "Cette sous-commande FBP n'est pas configurée.", ephemeral: true });
+            return;
+          }
+          response = nested.response;
+        }
         try {
           if (response.type === "text" && response.adminOnly &&
               !interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)) {
