@@ -174,15 +174,17 @@ Le dernier argument indique si l'option est obligatoire. La réponse affiche le 
 
 ## Messages et salons (développement v1.3.1)
 
-Les commandes ci-dessous sont disponibles dans la branche de développement. Elles ne sont pas encore publiées sur npm.
+Les commandes ci-dessous sont dans la branche de développement et ne sont pas encore publiées sur npm.
 
 ```fbp
 connexion()
 
 commandeEnvoyerMessage("envoyer")
+commandeLireMessages("lire-messages")
 commandeModifierMessage("modifier")
 commandeSupprimerMessage("supprimer")
 commandeReagirMessage("reagir")
+commandeJoindreFichier("joindre-fichier")
 commandeEpinglerMessage("epingler")
 commandeDesepinglerMessage("desepingler")
 
@@ -190,15 +192,39 @@ commandeCreerSalon("creer-salon")
 commandeSupprimerSalon("supprimer-salon")
 commandeRenommerSalon("renommer-salon")
 commandeSujetSalon("sujet-salon")
+commandeCreerCategorie("creer-categorie")
+commandeSupprimerCategorie("supprimer-categorie")
+commandeDeplacerSalon("deplacer-salon")
+commandePermissionSalon("permission-salon")
+
+commandeCreerFil("creer-fil")
+commandeEnvoyerFil("envoyer-fil")
+commandeFermerFil("fermer-fil")
 ```
 
-- **Messages :** envoyer un message dans un salon, modifier un message appartenant au bot, supprimer un message, ajouter une réaction, épingler et désépingler.
-- **Salons :** créer un salon texte ou vocal, supprimer un salon, le renommer et modifier son sujet.
-- Les actions de gestion vérifient les permissions du membre et du bot. Les commandes d'administration sont réservées aux permissions Discord correspondantes.
-- **Encore à développer pour la suite :** lecture de messages via une commande dédiée, pièces jointes, catégories, permissions détaillées et fils de discussion.
+### Messages et fichiers
 
-Ces commandes sont en cours de validation et ne sont pas encore disponibles dans la version npm publiée.
+- `commandeEnvoyerMessage` envoie un message dans un salon.
+- `commandeLireMessages` affiche les derniers messages (de 1 à 10) en réponse privée.
+- `commandeModifierMessage` modifie uniquement les messages envoyés par le bot.
+- `commandeSupprimerMessage`, `commandeReagirMessage`, `commandeEpinglerMessage` et `commandeDesepinglerMessage` gèrent les messages par identifiant.
+- `commandeJoindreFichier` envoie un fichier accessible via une URL HTTPS, avec un texte facultatif.
 
+### Salons, catégories et permissions
+
+- Créer des salons texte ou vocaux, les supprimer, les renommer et modifier leur sujet.
+- Créer et supprimer des catégories, déplacer un salon dans une catégorie.
+- `commandePermissionSalon` permet d'autoriser, de refuser ou de réinitialiser certaines permissions d'un rôle sur un salon : visibilité, envoi de messages, historique, pièces jointes et réactions.
+
+### Fils de discussion
+
+- `commandeCreerFil` crée un fil à partir d'un message existant.
+- `commandeEnvoyerFil` envoie un message dans un fil.
+- `commandeFermerFil` archive un fil.
+
+Les commandes vérifient les permissions Discord requises pour l'action. Le bot doit aussi disposer des permissions correspondantes et des intents nécessaires dans le portail développeur Discord. La lecture des messages dépend notamment de **Voir le salon** et **Lire l'historique des messages**.
+
+Cette API est en cours de validation. La version npm publiée reste distincte de la branche de développement.
 ## Commandes Discord avancées (v1.2.9)
 
 Les commandes texte peuvent recevoir des options utilisateur et rôle, ainsi que des suggestions d'autocomplétion. Les commandes différées répondent d'abord avec un accusé de réception Discord, puis modifient cette réponse.
