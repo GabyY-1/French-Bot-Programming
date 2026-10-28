@@ -99,3 +99,26 @@ test("un événement membre inconnu est refusé", () => {
     /Événement inconnu/
   );
 });
+
+test("les commandes de messages et de salons sont déclarables", () => {
+  assert.doesNotThrow(() => runSource([
+    "connexion()",
+    'commandeEnvoyerMessage("envoyer")',
+    'commandeModifierMessage("modifier")',
+    'commandeSupprimerMessage("supprimer")',
+    'commandeReagirMessage("reagir")',
+    'commandeEpinglerMessage("epingler")',
+    'commandeDesepinglerMessage("desepingler")',
+    'commandeCreerSalon("creer-salon")',
+    'commandeSupprimerSalon("supprimer-salon")',
+    'commandeRenommerSalon("renommer-salon")',
+    'commandeSujetSalon("sujet-salon")'
+  ].join("\\n")));
+});
+
+test("les noms invalides de commandes de salon sont refusés", () => {
+  assert.throws(
+    () => runSource(['connexion()', 'commandeCreerSalon("Nom invalide")'].join("\\n")),
+    /nom de la commande slash est invalide/
+  );
+});
