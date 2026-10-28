@@ -34,3 +34,42 @@ test("un choix entier refuse une valeur décimale", () => {
     /Token Discord manquant|nombre entier/
   );
 });
+
+
+test("les options utilisateur et rôle sont acceptées sur les commandes texte", () => {
+  assert.doesNotThrow(() => runSource([
+    "connexion()",
+    'commande("attribution", "Membre : {{membre}}, rôle : {{role}}")',
+    'optionUtilisateur("attribution", "membre", "Choisis un membre", true)',
+    'optionRole("attribution", "role", "Choisis un rôle", true)'
+  ].join("\n")));
+});
+
+test("les suggestions d'autocomplétion sont déclarées sur une option dédiée", () => {
+  assert.doesNotThrow(() => runSource([
+    "connexion()",
+    'commande("modele", "Modèle : {{nom}}")',
+    'optionAutocompleteTexte("modele", "nom", "Recherche un modèle", true)',
+    'suggestionAutocomplete("modele", "nom", "Modèle A", "modele-a")',
+    'suggestionAutocomplete("modele", "nom", "Modèle B", "modele-b")'
+  ].join("\n")));
+});
+
+test("les commandes différées et modifiables sont acceptées", () => {
+  assert.doesNotThrow(() => runSource([
+    "connexion()",
+    'commandeDifferee("traitement", "Traitement terminé.")',
+    'commandeModifiable("resultat", "Résultat mis à jour.")'
+  ].join("\n")));
+});
+
+test("les sous-commandes et groupes sont acceptés", () => {
+  assert.doesNotThrow(() => runSource([
+    "connexion()",
+    'commande("outils", "Commandes outils")',
+    'sousCommande("outils", "ping", "Vérifier le bot", "Pong !")',
+    'commande("config", "Commandes de configuration")',
+    'groupeSousCommandes("config", "salons", "Gestion des salons")',
+    'sousCommandeGroupe("config", "salons", "aide", "Afficher l'aide", "Utilise les commandes de configuration.")'
+  ].join("\n")));
+});
