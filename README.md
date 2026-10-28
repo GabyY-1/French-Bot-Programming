@@ -6,7 +6,7 @@ Le langage permet de déclarer des commandes slash, des réponses simples ou int
 
 ## Version actuelle
 
-La version actuelle est FBP 1.3.3. La version 1.3.1 ajoute les commandes de gestion des messages, salons, catégories et fils de discussion. La version 1.3.2 étend le langage avec les événements Discord : messages, réactions, interactions, salons vocaux et événements du serveur. La version 1.3.3 ajoute des actions pour les invitations, sondages, webhooks, messages privés et connexions vocales. La disponibilité sur npm dépend de la publication de la version.
+La version actuelle est FBP 1.3.3. La version 1.3.1 ajoute les commandes de gestion des messages, salons, catégories et fils de discussion. La version 1.3.2 étend le langage avec les événements Discord : messages, réactions, interactions, salons vocaux et événements du serveur. La version 1.3.3 ajoute les connexions vocales, les invitations, les sondages, les événements planifiés, les webhooks, les messages privés et les commandes contextuelles utilisateur/message. La disponibilité sur npm dépend de la publication de la version.
 
 ## Fonctionnalités
 
@@ -17,6 +17,45 @@ La version actuelle est FBP 1.3.3. La version 1.3.1 ajoute les commandes de gest
 - Options slash pour utilisateurs, rôles et salons
 - Événements de membres, modération et gestion des messages/salons
 - Support VS Code intégré au package
+
+## Fonctionnalités avancées de Discord (1.3.3)
+
+Ces appels se placent après `connexion()`. Le bot doit avoir les permissions Discord nécessaires, et les intents privilégiés doivent être activés dans le portail développeur lorsqu'ils sont requis.
+
+```fbp
+connexion()
+
+// Connexion et déconnexion vocale
+vocalRejoindre("ID_SALON_VOCAL")
+vocalQuitter("ID_SERVEUR")
+
+// Créer une invitation valable une heure
+invitationCreer("ID_SALON", 3600)
+
+// Publier un sondage Discord avec 2 à 5 réponses
+sondageCreer("ID_SALON", "Quel jour ?", "Samedi", "Dimanche")
+
+// Créer un événement planifié dans un salon vocal.
+// La date doit être une date ISO future, avec son fuseau horaire.
+evenementCreer("ID_SALON_VOCAL", "Réunion", "2027-06-11T18:00:00+02:00", "Réunion de la communauté")
+
+// Envoyer un message privé à un utilisateur
+messagePrive("ID_UTILISATEUR", "Bonjour !")
+
+// Créer un webhook, puis envoyer un message avec son URL
+webhookCreer("ID_SALON", "Annonce FBP")
+webhookEnvoyer("URL_WEBHOOK", "Nouvelle annonce")
+
+// Ajouter des commandes contextuelles au menu clic droit.
+// Elles répondent avec les informations de la cible sélectionnée.
+commandeContextuelleUtilisateur("Voir l'utilisateur")
+commandeContextuelleMessage("Voir le message")
+
+// Écouter les messages privés reçus par le bot
+evenementPrive("DM de {{pseudo}} : {{message}}")
+```
+
+Les connexions vocales nécessitent `@discordjs/voice`. Les commandes contextuelles sont enregistrées au démarrage comme les commandes slash. Les réponses contextuelles sont privées et affichent l'utilisateur ou le message sélectionné.
 
 ## Prérequis
 
@@ -39,7 +78,7 @@ Puis, dans le `package.json` de ton projet :
     "start": "fbp run lancer"
   },
   "dependencies": {
-    "fbp-language": "^1.3.2"
+    "fbp-language": "^1.3.3"
   }
 }
 ```
