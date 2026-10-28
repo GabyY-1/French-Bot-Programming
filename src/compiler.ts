@@ -117,7 +117,8 @@ type DiscordResponse =
         ephemeral?: boolean;
         deferred?: boolean;
         adminOnly?: boolean;
-        roleAction?: "add" | "remove";
+        roleAction?: "add" | "remove" | "check";
+        memberAction?: "ban" | "kick" | "timeout" | "untimeout" | "nickname" | "unban";
         options?: DiscordOption[];
       }
     | {
@@ -154,6 +155,7 @@ export class FbpCompiler {
   private connectDiscord: boolean;
   private discordClient?: Client;
   private discordCommands = new Map<string, DiscordResponse>();
+  private discordMemberEvents = new Map<string, string>();
 
   constructor(options: RunOptions = {}) {
     this.output = options.onOutput ?? (value => console.log(value));
@@ -254,8 +256,68 @@ export class FbpCompiler {
       const token = process.env.DISCORD_TOKEN;
       if (!token) throw new FbpError("Token Discord manquant. Ajoute DISCORD_TOKEN dans le fichier .env.", undefined, line);
 
-      const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+      const client = new Client({
+        intents: [
+          GatewayIntentBits.Guilds,
+          GatewayIntentBits.GuildMembers,
+          GatewayIntentBits.GuildPresences
+        ]
+      });
       this.discordClient = client;
+
+      const renderMemberEvent = (template: string, member: import("discord.js").GuildMember, extra: Record<string, string> = {}) =>
+        template.replace(/\\{\\{([a-z0-9_-]{1,32})\\}\\}/g, (match, key: string) => {
+          const values: Record<string, string> = {
+            membre: member.user.username,
+            pseudo: member.displayName,
+            id: member.id,
+            serveur: member.guild.name,
+            roles: member.roles.cache.filter(role => role.id !== member.guild.id).map(role => role.name).join(", ") || "Aucun rôle",
+            ...extra
+          };
+          return values[key] ?? match;
+        });
+
+      client.on("guildMemberAdd", member => {
+        const template = this.discordMemberEvents.get("arrivee");
+        if (template) this.output(renderMemberEvent(template, member));
+      });
+      client.on("guildMemberRemove", member => {
+        const template = this.discordMemberEvents.get("depart");
+        if (template) this.output(renderMemberEvent(template, member));
+      });
+      client.on("guildMemberUpdate", (before, after) => {
+        if (before.nickname !== after.nickname || before.user.username !== after.user.username) {
+          const template = this.discordMemberEvents.get("pseudo");
+          if (template) this.output(renderMemberEvent(template, after, {
+            ancien: before.displayName,
+            nouveau: after.displayName
+          }));
+        }
+        const beforeRoles = before.roles.cache.map(role => role.id).sort().join(",");
+        const afterRoles = after.roles.cache.map(role => role.id).sort().join(",");
+        if (beforeRoles !== afterRoles) {
+          const template = this.discordMemberEvents.get("roles");
+          if (template) this.output(renderMemberEvent(template, after, {
+            anciens_roles: before.roles.cache.filter(role => role.id !== before.guild.id).map(role => role.name).join(", ") || "Aucun rôle",
+            nouveaux_roles: after.roles.cache.filter(role => role.id !== after.guild.id).map(role => role.name).join(", ") || "Aucun rôle"
+          }));
+        }
+      });
+      client.on("presenceUpdate", (before, after) => {
+        if (!after) return;
+        const template = this.discordMemberEvents.get("statut");
+        if (!template) return;
+        const member = after.member;
+        if (!member) return;
+        const status = (presence: typeof before) => presence?.status ?? "inconnu";
+        if (status(before) !== status(after)) {
+          this.output(renderMemberEvent(template, member, {
+            ancien: status(before),
+            nouveau: status(after)
+          }));
+        }
+      });
 
       client.once("ready", async () => {
         try {
@@ -273,7 +335,27 @@ export class FbpCompiler {
             if (response.type === "text" && response.roleAction) {
               builder.setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles);
               builder.addUserOption(option => option.setName("membre").setDescription("Membre concerné").setRequired(true));
-              builder.addRoleOption(option => option.setName("role").setDescription("Rôle à ajouter ou retirer").setRequired(true));
+              builder.addRoleOption(option => option.setName("role").setDescription("Rôle à gérer ou vérifier").setRequired(true));
+            }
+            if (response.type === "text" && response.memberAction) {
+              const action = response.memberAction;
+              const permission = action === "ban" || action === "unban"
+                ? PermissionFlagsBits.BanMembers
+                : action === "kick"
+                  ? PermissionFlagsBits.KickMembers
+                  : action === "nickname"
+                    ? PermissionFlagsBits.ManageNicknames
+                    : PermissionFlagsBits.ModerateMembers;
+              builder.setDefaultMemberPermissions(permission);
+              if (action === "unban") {
+                builder.addStringOption(option => option.setName("utilisateur_id").setDescription("Identifiant Discord de l'utilisateur").setRequired(true));
+              } else {
+                builder.addUserOption(option => option.setName("membre").setDescription("Membre concerné").setRequired(true));
+              }
+              if (action === "timeout") builder.addIntegerOption(option => option.setName("minutes").setDescription("Durée du timeout en minutes (1 à 40320)").setMinValue(1).setMaxValue(40320).setRequired(true));
+              if (action === "ban") builder.addStringOption(option => option.setName("raison").setDescription("Motif du bannissement").setRequired(false));
+              if (action === "kick") builder.addStringOption(option => option.setName("raison").setDescription("Motif de l'expulsion").setRequired(false));
+              if (action === "nickname") builder.addStringOption(option => option.setName("surnom").setDescription("Nouveau surnom, vide pour le retirer").setRequired(true));
             }
             if (response.type === "text" && response.adminOnly) {
               builder.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
@@ -373,6 +455,77 @@ export class FbpCompiler {
             await interaction.reply({ content: "Cette commande est réservée aux administrateurs.", ephemeral: true });
             return;
           }
+          if (response.type === "text" && response.memberAction) {
+            if (!interaction.inGuild() || !interaction.guild) {
+              await interaction.reply({ content: "Cette commande doit être utilisée sur un serveur.", ephemeral: true });
+              return;
+            }
+            const guild = interaction.guild;
+            const action = response.memberAction;
+            const actor = await guild.members.fetch(interaction.user.id).catch(() => null);
+            const requiredPermission = action === "ban" || action === "unban"
+              ? PermissionFlagsBits.BanMembers
+              : action === "kick"
+                ? PermissionFlagsBits.KickMembers
+                : action === "nickname"
+                  ? PermissionFlagsBits.ManageNicknames
+                  : PermissionFlagsBits.ModerateMembers;
+            if (!actor?.permissions.has(requiredPermission)) {
+              await interaction.reply({ content: "Tu n'as pas la permission nécessaire pour cette action.", ephemeral: true });
+              return;
+            }
+            const botMember = guild.members.me;
+            if (!botMember || !botMember.permissions.has(requiredPermission)) {
+              await interaction.reply({ content: "Le bot ne possède pas la permission nécessaire.", ephemeral: true });
+              return;
+            }
+            const reason = action === "ban" || action === "kick" ? interaction.options.getString("raison") ?? undefined : undefined;
+            if (action === "unban") {
+              const userId = interaction.options.getString("utilisateur_id", true).trim();
+              if (!/^\\d{17,20}$/.test(userId)) {
+                await interaction.reply({ content: "L'identifiant Discord fourni est invalide.", ephemeral: true });
+                return;
+              }
+              await guild.bans.remove(userId, "Débannissement via FBP");
+              await interaction.reply({ content: "L'utilisateur a été débanni.", ephemeral: true });
+              return;
+            }
+            const user = interaction.options.getUser("membre", true);
+            const member = await guild.members.fetch(user.id).catch(() => null);
+            if (!member) {
+              await interaction.reply({ content: "Ce membre n'est pas présent sur le serveur.", ephemeral: true });
+              return;
+            }
+            if (member.id === guild.ownerId || member.id === interaction.user.id ||
+                member.roles.highest.position >= actor.roles.highest.position && interaction.user.id !== guild.ownerId ||
+                member.roles.highest.position >= botMember.roles.highest.position) {
+              await interaction.reply({ content: "Cette action est bloquée par la hiérarchie des rôles du serveur.", ephemeral: true });
+              return;
+            }
+            if (action === "ban") await member.ban({ reason });
+            else if (action === "kick") await member.kick(reason);
+            else if (action === "timeout") {
+              const minutes = interaction.options.getInteger("minutes", true);
+              await member.timeout(minutes * 60_000, "Timeout via FBP");
+            } else if (action === "untimeout") await member.timeout(null, "Fin du timeout via FBP");
+            else if (action === "nickname") {
+              const nickname = interaction.options.getString("surnom", true).trim();
+              if (nickname.length > 32) {
+                await interaction.reply({ content: "Un surnom ne peut pas dépasser 32 caractères.", ephemeral: true });
+                return;
+              }
+              await member.setNickname(nickname || null, "Modification via FBP");
+            }
+            const labels: Record<string, string> = {
+              ban: "Membre banni.",
+              kick: "Membre expulsé.",
+              timeout: "Timeout appliqué.",
+              untimeout: "Timeout retiré.",
+              nickname: "Surnom mis à jour."
+            };
+            await interaction.reply({ content: labels[action] ?? "Action effectuée.", ephemeral: true });
+            return;
+          }
           if (response.type === "text" && response.roleAction) {
             if (!interaction.inGuild() || !interaction.guild) {
               await interaction.reply({ content: "Cette commande doit être utilisée sur un serveur.", ephemeral: true });
@@ -409,8 +562,11 @@ export class FbpCompiler {
               return;
             }
             if (response.roleAction === "add") await targetMember.roles.add(role, "Commande FBP de gestion des rôles");
-            else await targetMember.roles.remove(role, "Commande FBP de gestion des rôles");
-            await interaction.reply({ content: response.content.replace(/\\{\\{membre\\}\\}/g, targetMember.user.username).replace(/\\{\\{role\\}\\}/g, role.name), ephemeral: response.ephemeral ?? false });
+            else if (response.roleAction === "remove") await targetMember.roles.remove(role, "Commande FBP de gestion des rôles");
+            const content = response.roleAction === "check"
+              ? (targetMember.roles.cache.has(role.id) ? targetMember.user.username + " possède le rôle " + role.name + "." : targetMember.user.username + " ne possède pas le rôle " + role.name + ".")
+              : response.content.replace(/\\{\\{membre\\}\\}/g, targetMember.user.username).replace(/\\{\\{role\\}\\}/g, role.name);
+            await interaction.reply({ content, ephemeral: response.ephemeral ?? false });
             return;
           }
           const optionValues = new Map<string, string>();
@@ -514,6 +670,57 @@ export class FbpCompiler {
         type: "text",
         content: name === "commandeAjouterRole" ? "Le rôle {{role}} a été ajouté à {{membre}}." : "Le rôle {{role}} a été retiré à {{membre}}.",
         roleAction: name === "commandeAjouterRole" ? "add" : "remove",
+        ephemeral: true,
+        options: []
+      });
+      return;
+    }
+    if (name === "evenementMembre") {
+      if (!this.discordClient) throw new FbpError("Appelle connexion() avant de déclarer un événement membre.", undefined, line);
+      if (values.length !== 2 || values.some(value => typeof value !== "string")) {
+        throw new FbpError('Utilisation : evenementMembre("arrivee|depart|pseudo|roles|statut", "message").', undefined, line);
+      }
+      const [eventName, message] = values as string[];
+      if (!["arrivee", "depart", "pseudo", "roles", "statut"].includes(eventName)) {
+        throw new FbpError("Événement inconnu. Choisis arrivee, depart, pseudo, roles ou statut.", undefined, line);
+      }
+      this.discordMemberEvents.set(eventName, message);
+      return;
+    }
+    if (name === "commandeBannir" || name === "commandeExpulser" || name === "commandeTimeout" ||
+        name === "commandeRetirerTimeout" || name === "commandeSurnom" || name === "commandeDebannir") {
+      if (!this.discordClient) throw new FbpError("Appelle connexion() avant de déclarer une commande.", undefined, line);
+      if (values.length !== 1 || typeof values[0] !== "string") {
+        throw new FbpError("Utilisation : commandeBannir/Expulser/Timeout/RetirerTimeout/Surnom/Debannir(\"nom\").", undefined, line);
+      }
+      const commandName = values[0];
+      if (!/^[a-z0-9_-]{1,32}$/.test(commandName)) throw new FbpError("Le nom de la commande slash est invalide.", undefined, line);
+      const actions: Record<string, NonNullable<Extract<DiscordResponse, { type: "text" }>["memberAction"]>> = {
+        commandeBannir: "ban",
+        commandeExpulser: "kick",
+        commandeTimeout: "timeout",
+        commandeRetirerTimeout: "untimeout",
+        commandeSurnom: "nickname",
+        commandeDebannir: "unban"
+      };
+      this.discordCommands.set(commandName, {
+        type: "text",
+        content: "Action de modération effectuée.",
+        memberAction: actions[name],
+        ephemeral: true,
+        options: []
+      });
+      return;
+    }
+    if (name === "commandeVerifierRole") {
+      if (!this.discordClient) throw new FbpError("Appelle connexion() avant de déclarer une commande.", undefined, line);
+      if (values.length !== 1 || typeof values[0] !== "string") throw new FbpError('Utilisation : commandeVerifierRole("verifier-role").', undefined, line);
+      const commandName = values[0];
+      if (!/^[a-z0-9_-]{1,32}$/.test(commandName)) throw new FbpError("Le nom de la commande slash est invalide.", undefined, line);
+      this.discordCommands.set(commandName, {
+        type: "text",
+        content: "Vérification du rôle effectuée.",
+        roleAction: "check",
         ephemeral: true,
         options: []
       });
