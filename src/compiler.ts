@@ -265,7 +265,7 @@ export class FbpCompiler {
       });
       this.discordClient = client;
 
-      const renderMemberEvent = (template: string, member: import("discord.js").GuildMember, extra: Record<string, string> = {}) =>
+      const renderMemberEvent = (template: string, member: import("discord.js").GuildMember | import("discord.js").PartialGuildMember, extra: Record<string, string> = {}) =>
         template.replace(/\\{\\{([a-z0-9_-]{1,32})\\}\\}/g, (match, key: string) => {
           const values: Record<string, string> = {
             membre: member.user.username,
