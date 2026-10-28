@@ -2,7 +2,7 @@
   "name": "fbp-language",
   "displayName": "FBP - French Bot Programming",
   "description": "Langage FBP avec compilateur, commandes Discord et support VS Code.",
-  "version": "1.2.7",
+  "version": "1.2.8",
   "type": "commonjs",
   "main": "dist/compiler.js",
   "bin": {
@@ -17,7 +17,8 @@
     "vscode-extension/",
     "language-configuration.json",
     "package.json",
-    "LICENSE"
+    "LICENSE",
+    "NOTICE"
   ],
   "repository": {
     "type": "git",
