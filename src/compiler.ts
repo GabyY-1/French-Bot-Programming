@@ -669,12 +669,13 @@ export class FbpCompiler {
           if (!manager) throw new Error("L'application Discord n'est pas disponible.");
           const existing = await manager.fetch();
           for (const command of [...commands, ...contextCommands]) {
-            const registered = existing.find(item => item.name === command.name);
+            const commandType = command.type ?? ApplicationCommandType.ChatInput;
+            const registered = existing.find(item => item.name === command.name && item.type === commandType);
             if (registered) await manager.edit(registered.id, command);
             else await manager.create(command);
           }
           this.output("Connecté à Discord en tant que " + (client.user?.tag ?? "bot") + ".");
-          this.output("Commandes slash FBP enregistrées : " + commands.length + ".");
+          this.output("Commandes FBP enregistrées : " + (commands.length + contextCommands.length) + ".");
         } catch (error: unknown) {
           this.output("Enregistrement des commandes slash impossible : " + (error instanceof Error ? error.message : String(error)));
         }
