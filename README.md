@@ -204,7 +204,7 @@ Les options utilisateur et rôle sont également disponibles avec `optionUtilisa
 
 ## Limites actuelles
 
-FBP est encore un interpréteur de base. Les paramètres de fonction, les conditions, les boucles, les valeurs de retour et les expressions arithmétiques ne sont pas encore implémentés. La connexion Discord utilise un token stocké dans `.env`. Les commandes slash peuvent répondre avec un texte fixe ou un embed défini avec `commandeEmbed(nom, titre, description, couleur)`. Ajoute des champs avec `champ(nomCommande, nomChamp, valeur)`. Les valeurs des embeds sont actuellement fixes : la récupération dynamique des informations du serveur, les options, paramètres, permissions avancées et conditions ne sont pas encore implémentés.
+FBP ne prend pas encore en charge les paramètres de fonction, les conditions, les boucles, les valeurs de retour ni les expressions arithmétiques. Les commandes Discord prennent en charge les options texte, nombre, entier, booléen, salon, utilisateur et rôle, ainsi que les choix prédéfinis, l'autocomplétion à suggestions statiques, les sous-commandes et les groupes. Les réponses différées sont modifiées après leur acquittement initial. Les réponses de sous-commandes sont actuellement fixes et les options ne sont pas encore configurables individuellement sur chaque sous-commande. La connexion Discord utilise un token stocké dans `.env`.
 
 ## Tests
 
