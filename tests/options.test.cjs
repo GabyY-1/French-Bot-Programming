@@ -90,12 +90,12 @@ test("les événements de membres et les commandes de modération sont déclarab
     'commandeSurnom("surnom")',
     'commandeDebannir("debannir")',
     'commandeVerifierRole("verifier-role")'
-  ].join("\\n")));
+  ].join("\n")));
 });
 
 test("un événement membre inconnu est refusé", () => {
   assert.throws(
-    () => runSource(['connexion()', 'evenementMembre("inconnu", "test")'].join("\\n")),
+    () => runSource(['connexion()', 'evenementMembre("inconnu", "test")'].join("\n")),
     /Événement inconnu/
   );
 });
