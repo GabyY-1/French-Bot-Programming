@@ -382,8 +382,7 @@ export class FbpCompiler {
         this.output(template.replace(/\{\{([a-z0-9_-]{1,32})\}\}/g, (match, name: string) => values[name] ?? match));
       };
 
-      if (this.discordEvents.has("message:recu")) {
-        client.on("messageCreate", message => {
+      client.on("messageCreate", message => {
           if (message.author.bot || !message.guild) return;
           renderDiscordEvent("message:recu", {
             pseudo: message.member?.displayName ?? message.author.username,
@@ -396,10 +395,8 @@ export class FbpCompiler {
             lien: message.url
           });
         });
-      }
 
-      if (this.discordEvents.has("reaction:ajout")) {
-        client.on("messageReactionAdd", async (reaction, user) => {
+      client.on("messageReactionAdd", async (reaction, user) => {
           if (user.bot) return;
           if (reaction.partial) reaction = await reaction.fetch().catch(() => null) as typeof reaction;
           if (!reaction) return;
@@ -415,10 +412,8 @@ export class FbpCompiler {
             message_id: reaction.message.id
           });
         });
-      }
 
-      if (this.discordEvents.has("reaction:retrait")) {
-        client.on("messageReactionRemove", async (reaction, user) => {
+      client.on("messageReactionRemove", async (reaction, user) => {
           if (user.bot) return;
           if (reaction.partial) reaction = await reaction.fetch().catch(() => null) as typeof reaction;
           if (!reaction) return;
@@ -434,11 +429,9 @@ export class FbpCompiler {
             message_id: reaction.message.id
           });
         });
-      }
 
       for (const interactionType of ["bouton", "menu", "formulaire"] as const) {
         const key = "interaction:" + interactionType;
-        if (!this.discordEvents.has(key)) continue;
         client.on("interactionCreate", interaction => {
           if (interactionType === "bouton" && !interaction.isButton()) return;
           if (interactionType === "menu" && !interaction.isStringSelectMenu() && !interaction.isUserSelectMenu() &&
@@ -461,8 +454,7 @@ export class FbpCompiler {
         });
       }
 
-      if (this.discordEvents.has("vocal:arrivee") || this.discordEvents.has("vocal:depart") || this.discordEvents.has("vocal:changement")) {
-        client.on("voiceStateUpdate", (before, after) => {
+      client.on("voiceStateUpdate", (before, after) => {
           const member = after.member ?? before.member;
           if (!member) return;
           const eventName = !before.channelId && after.channelId
@@ -481,7 +473,6 @@ export class FbpCompiler {
             salon: after.channel?.name ?? before.channel?.name ?? "Aucun salon vocal"
           });
         });
-      }
 
       const serverEvents: Array<[string, string]> = [
         ["channelCreate", "salon_cree"],
@@ -495,7 +486,6 @@ export class FbpCompiler {
         ["guildUpdate", "serveur_modifie"]
       ];
       for (const [discordEvent, fbpEvent] of serverEvents) {
-        if (!this.discordEvents.has("serveur:" + fbpEvent)) continue;
         client.on(discordEvent as never, ((...args: unknown[]) => {
           const first = args[0] as { name?: string; id?: string; guild?: { name: string }; user?: { username: string; id: string }; reason?: string };
           const second = args[1] as { name?: string; id?: string; guild?: { name: string }; user?: { username: string; id: string }; reason?: string } | undefined;
@@ -512,8 +502,7 @@ export class FbpCompiler {
         }) as never);
       }
 
-      if (this.discordEvents.has("serveur:moderation")) {
-        client.on("guildAuditLogEntryCreate", (entry, guild) => {
+      client.on("guildAuditLogEntryCreate", (entry, guild) => {
           renderDiscordEvent("serveur:moderation", {
             evenement: entry.action.toString(),
             id: entry.id,
@@ -523,7 +512,6 @@ export class FbpCompiler {
             raison: entry.reason ?? "Aucun motif"
           });
         });
-      }
 
       client.once("ready", async () => {
         try {
