@@ -286,21 +286,24 @@ export class FbpCompiler {
         const template = this.discordMemberEvents.get("depart");
         if (template) this.output(renderMemberEvent(template, member));
       });
-      client.on("guildMemberUpdate", (before, after) => {
-        if (before.nickname !== after.nickname || before.user.username !== after.user.username) {
+      client.on("guildMemberUpdate", async (before, after) => {
+        const previousMember = before.partial ? await before.fetch().catch(() => null) : before;
+        const currentMember = after.partial ? await after.fetch().catch(() => null) : after;
+        if (!previousMember || !currentMember) return;
+        if (previousMember.nickname !== currentMember.nickname || previousMember.user.username !== currentMember.user.username) {
           const template = this.discordMemberEvents.get("pseudo");
-          if (template) this.output(renderMemberEvent(template, after, {
-            ancien: before.displayName,
-            nouveau: after.displayName
+          if (template) this.output(renderMemberEvent(template, currentMember, {
+            ancien: previousMember.displayName,
+            nouveau: currentMember.displayName
           }));
         }
-        const beforeRoles = before.roles.cache.map(role => role.id).sort().join(",");
-        const afterRoles = after.roles.cache.map(role => role.id).sort().join(",");
+        const beforeRoles = previousMember.roles.cache.map(role => role.id).sort().join(",");
+        const afterRoles = currentMember.roles.cache.map(role => role.id).sort().join(",");
         if (beforeRoles !== afterRoles) {
           const template = this.discordMemberEvents.get("roles");
-          if (template) this.output(renderMemberEvent(template, after, {
-            anciens_roles: before.roles.cache.filter(role => role.id !== before.guild.id).map(role => role.name).join(", ") || "Aucun rôle",
-            nouveaux_roles: after.roles.cache.filter(role => role.id !== after.guild.id).map(role => role.name).join(", ") || "Aucun rôle"
+          if (template) this.output(renderMemberEvent(template, currentMember, {
+            anciens_roles: previousMember.roles.cache.filter(role => role.id !== previousMember.guild.id).map(role => role.name).join(", ") || "Aucun rôle",
+            nouveaux_roles: currentMember.roles.cache.filter(role => role.id !== currentMember.guild.id).map(role => role.name).join(", ") || "Aucun rôle"
           }));
         }
       });
