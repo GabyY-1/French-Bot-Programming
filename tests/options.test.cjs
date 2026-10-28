@@ -104,15 +104,23 @@ test("les commandes de messages et de salons sont déclarables", () => {
   assert.doesNotThrow(() => runSource([
     "connexion()",
     'commandeEnvoyerMessage("envoyer")',
+    'commandeLireMessages("lire-messages")',
     'commandeModifierMessage("modifier")',
     'commandeSupprimerMessage("supprimer")',
     'commandeReagirMessage("reagir")',
     'commandeEpinglerMessage("epingler")',
     'commandeDesepinglerMessage("desepingler")',
+    'commandeJoindreFichier("joindre-fichier")',
     'commandeCreerSalon("creer-salon")',
     'commandeSupprimerSalon("supprimer-salon")',
     'commandeRenommerSalon("renommer-salon")',
-    'commandeSujetSalon("sujet-salon")'
+    'commandeSujetSalon("sujet-salon")',
+    'commandeCreerCategorie("creer-categorie")',
+    'commandeSupprimerCategorie("supprimer-categorie")',
+    'commandeDeplacerSalon("deplacer-salon")',
+    'commandePermissionSalon("permission-salon")',
+    'commandeCreerFil("creer-fil")',
+    'commandeEnvoyerFil("envoyer-fil")'
   ].join("\n")));
 });
 
