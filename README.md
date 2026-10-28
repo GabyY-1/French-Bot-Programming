@@ -172,6 +172,18 @@ optionSalon("configurer", "salon", "Choisis un salon", true)
 
 Le dernier argument indique si l'option est obligatoire. La réponse affiche le nom du salon précédé de `#`. Cette option peut être ajoutée aux commandes texte ou aux commandes embed, comme les autres options slash.
 
+## Messages et salons (prévu pour la v1.3.1)
+
+Ces fonctionnalités sont prévues pour une prochaine version et ne sont pas encore disponibles dans le package publié. Elles seront ajoutées puis testées avant la publication de FBP 1.3.1.
+
+- Envoyer, lire, modifier et supprimer des messages
+- Ajouter et retirer des réactions emoji
+- Gérer les pièces jointes et les fichiers
+- Créer, modifier et supprimer des salons
+- Gérer les permissions et les catégories
+- Épingler et désépingler des messages
+- Créer et gérer les fils de discussion
+
 ## Commandes Discord avancées (v1.2.9)
 
 Les commandes texte peuvent recevoir des options utilisateur et rôle, ainsi que des suggestions d'autocomplétion. Les commandes différées répondent d'abord avec un accusé de réception Discord, puis modifient cette réponse.
