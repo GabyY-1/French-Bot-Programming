@@ -25,12 +25,7 @@ La branche `main` prépare FBP 1.3.1. Cette version ajoute les commandes de gest
 
 ## Installation depuis npm
 
-- Node.js 20 ou plus récent
-- npm
-
-## Installation depuis npm
-
-Quand le paquet sera publié sur npm :
+Quand la version sera publiée sur npm :
 
 ```bash
 npm install fbp-language
@@ -44,7 +39,7 @@ Puis, dans le `package.json` de ton projet :
     "start": "fbp run lancer"
   },
   "dependencies": {
-    "fbp-language": "^1.2.9"
+    "fbp-language": "^1.3.1"
   }
 }
 ```
