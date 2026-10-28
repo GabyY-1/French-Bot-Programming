@@ -70,6 +70,6 @@ test("les sous-commandes et groupes sont acceptés", () => {
     'sousCommande("outils", "ping", "Vérifier le bot", "Pong !")',
     'commande("config", "Commandes de configuration")',
     'groupeSousCommandes("config", "salons", "Gestion des salons")',
-    'sousCommandeGroupe("config", "salons", "aide", "Afficher l'aide", "Utilise les commandes de configuration.")'
+    `sousCommandeGroupe("config", "salons", "aide", "Afficher l'aide", "Utilise les commandes de configuration.")`
   ].join("\n")));
 });
