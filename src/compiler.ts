@@ -316,13 +316,15 @@ export class FbpCompiler {
               await interaction.reply({ content: "Impossible de récupérer le membre ou le bot sur ce serveur.", ephemeral: true });
               return;
             }
-            if (role.id === guild.id || role.managed || role.position >= botMember.roles.highest.position) {
-              await interaction.reply({ content: "Ce rôle ne peut pas être géré par le bot : vérifie son type et sa position dans la hiérarchie.", ephemeral: true });
+            const actor = interaction.member as import("discord.js").GuildMember;
+            if (role.id === guild.id || role.managed ||
+                role.position >= botMember.roles.highest.position ||
+                (interaction.user.id !== guild.ownerId && role.position >= actor.roles.highest.position)) {
+              await interaction.reply({ content: "Ce rôle ne peut pas être géré : vérifie tes permissions et la hiérarchie des rôles.", ephemeral: true });
               return;
             }
             if (targetMember.id === interaction.user.id ||
-                targetMember.roles.highest.position >= (interaction.member as import("discord.js").GuildMember).roles.highest.position &&
-                interaction.user.id !== guild.ownerId) {
+                (targetMember.roles.highest.position >= actor.roles.highest.position && interaction.user.id !== guild.ownerId)) {
               await interaction.reply({ content: "Tu ne peux pas modifier les rôles de ce membre en raison de la hiérarchie du serveur.", ephemeral: true });
               return;
             }
