@@ -1608,7 +1608,7 @@ export class FbpCompiler {
         const voice = await import("@discordjs/voice");
         const connection = voice.joinVoiceChannel({ channelId: channel.id, guildId: channel.guild.id, adapterCreator: channel.guild.voiceAdapterCreator, selfDeaf: true });
         await voice.entersState(connection, voice.VoiceConnectionStatus.Ready, 15_000);
-        this.output("Connecté au salon vocal : " + ("name" in channel ? channel.name : channel.id));
+        this.output("Connecté au salon vocal : " + channel.name);
       }).catch(error => this.output("Échec de la connexion vocale : " + (error instanceof Error ? error.message : String(error))));
       return;
     }
