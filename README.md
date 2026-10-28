@@ -6,7 +6,7 @@ Le langage permet de déclarer des commandes slash, des réponses simples ou int
 
 ## Version actuelle
 
-La branche `main` prépare FBP 1.3.1. Cette version ajoute les commandes de gestion des messages, salons, catégories et fils de discussion. La lecture de l’historique permet de récupérer jusqu’à 100 messages, répartis en réponses privées si nécessaire. La disponibilité sur npm dépend de la publication de cette version.
+La branche de développement prépare FBP 1.3.2. La version 1.3.1 ajoute les commandes de gestion des messages, salons, catégories et fils de discussion. La version 1.3.2 étend le langage avec les événements Discord : messages, réactions, interactions, salons vocaux et événements du serveur. La disponibilité sur npm dépend de la publication de la version.
 
 ## Fonctionnalités
 
@@ -39,7 +39,7 @@ Puis, dans le `package.json` de ton projet :
     "start": "fbp run lancer"
   },
   "dependencies": {
-    "fbp-language": "^1.3.1"
+    "fbp-language": "^1.3.2"
   }
 }
 ```
@@ -284,6 +284,43 @@ commandeVerifierRole("verifier-role")
 Les commandes de modération sont limitées par les permissions Discord, la hiérarchie des rôles et les limites de Discord. `timeout` accepte une durée de 1 à 40 320 minutes. `surnom` accepte un surnom vide pour le retirer. `debannir` demande l'identifiant Discord de l'utilisateur. Le bot doit disposer des permissions correspondantes et son rôle doit être suffisamment haut.
 
 **Configuration obligatoire :** les événements d'arrivée, départ et changements de membre nécessitent l'intent privilégié **Server Members Intent**. Le suivi des statuts nécessite également **Presence Intent**. Active-les dans le Discord Developer Portal, section *Bot → Privileged Gateway Intents*. Sans ces intents, Discord ne transmettra pas tous ces événements.
+
+## Événements Discord (v1.3.2)
+
+Les événements se déclarent après `connexion()`. Lorsqu'un événement correspondant se produit, FBP affiche le modèle dans le terminal. Les variables disponibles dépendent de l'événement.
+
+```fbp
+connexion()
+
+evenementMessage("recu", "{{pseudo}} dans {{salon}} : {{message}}")
+evenementReaction("ajout", "{{pseudo}} a réagi avec {{reaction}}")
+evenementReaction("retrait", "{{pseudo}} a retiré {{reaction}}")
+
+evenementInteraction("bouton", "{{pseudo}} a cliqué sur {{custom_id}}")
+evenementInteraction("menu", "{{pseudo}} a choisi {{valeurs}}")
+evenementInteraction("formulaire", "{{pseudo}} a envoyé : {{formulaire}}")
+
+evenementVocal("arrivee", "{{pseudo}} rejoint {{nouveau}}")
+evenementVocal("depart", "{{pseudo}} quitte {{ancien}}")
+evenementVocal("changement", "{{pseudo}} passe de {{ancien}} à {{nouveau}}")
+
+evenementServeur("salon_cree", "Nouveau salon : {{nom}}")
+evenementServeur("role_modifie", "Rôle modifié : {{nom}}")
+evenementServeur("bannissement", "{{pseudo}} a été banni du serveur {{serveur}}")
+evenementServeur("moderation", "Action {{evenement}} par {{pseudo}} : {{raison}}")
+```
+
+Événements disponibles :
+
+- `evenementMessage("recu", message)` : messages texte reçus dans les serveurs.
+- `evenementReaction("ajout" | "retrait", message)` : ajout et retrait de réactions.
+- `evenementInteraction("bouton" | "menu" | "formulaire", message)` : clics sur boutons, sélections de menus et envois de modals.
+- `evenementVocal("arrivee" | "depart" | "changement", message)` : changements de salon vocal.
+- `evenementServeur(...)` : création, suppression ou modification de salons et rôles, modifications du serveur, bannissements, débannissements et entrées de journal de modération.
+
+Variables courantes : `{{pseudo}}`, `{{membre}}`, `{{id}}`, `{{serveur}}`, `{{salon}}`, `{{message}}`, `{{message_id}}`, `{{lien}}`, `{{reaction}}`, `{{custom_id}}`, `{{valeurs}}`, `{{formulaire}}`, `{{ancien}}`, `{{nouveau}}`, `{{nom}}`, `{{raison}}` et `{{evenement}}`.
+
+**Intents Discord :** les messages nécessitent les intents serveur `Guilds`, `GuildMessages` et l'intent privilégié `Message Content Intent`. Les réactions nécessitent `GuildMessageReactions`, les événements vocaux `GuildVoiceStates`, les événements de membres `GuildMembers`, et les événements de modération `GuildModeration`. Active les intents privilégiés nécessaires dans le portail développeur Discord et accorde au bot les permissions adaptées. Les événements de journal d'audit nécessitent également la permission **Voir les journaux d'audit**. Les interactions détectées sont celles envoyées à l'application du bot ; ces déclarations observent les interactions et n'en créent pas.
 
 ## Nouveautés de FBP 1.2.4
 
