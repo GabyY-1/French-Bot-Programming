@@ -119,7 +119,7 @@ type DiscordResponse =
         adminOnly?: boolean;
         roleAction?: "add" | "remove" | "check";
         memberAction?: "ban" | "kick" | "timeout" | "untimeout" | "nickname" | "unban";
-        contentAction?: "send" | "edit" | "delete" | "react" | "pin" | "unpin" | "create-channel" | "delete-channel" | "rename-channel" | "topic-channel";
+        contentAction?: "send" | "read" | "edit" | "delete" | "react" | "pin" | "unpin" | "attach" | "create-channel" | "delete-channel" | "rename-channel" | "topic-channel" | "create-category" | "move-category" | "delete-category" | "channel-permission" | "create-thread" | "send-thread";
         options?: DiscordOption[];
       }
     | {
