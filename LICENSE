@@ -1,44 +1,121 @@
-# FBP — French Bot Programming
-## Licence propriétaire
+# Mist Max Proprietary License (MMPL)
+**Version 1.0 — 2026**
 
-Copyright (c) 2026 Mist Max. Tous droits réservés.
+Copyright © 2026 Mist Max. Tous droits réservés.
 
-### 1. Autorisation d'utilisation
+## 1. Objet et titulaire des droits
 
-L'auteur autorise toute personne à télécharger et à utiliser FBP (French Bot Programming) à des fins personnelles ou professionnelles, sous réserve du respect de la présente licence.
+La présente licence, appelée **Mist Max Proprietary License (MMPL)**, définit les conditions d'utilisation, de modification et de redistribution du logiciel auquel elle est jointe (le « Logiciel »).
 
-### 2. Restrictions
+Sauf mention contraire, les droits détenus sur le Logiciel appartiennent à **Mist Max**, studio de création, dans la mesure où ces droits lui ont effectivement été cédés ou appartiennent légalement à Mist Max. Les éléments appartenant à des tiers restent soumis à leurs propres licences.
 
-Sans autorisation écrite préalable du titulaire des droits, il est interdit de :
+La publication du code source sur GitHub ne signifie pas que le Logiciel est libre de droits ou qu'il peut être réutilisé sans restriction.
 
-- Modifier, adapter ou créer des œuvres dérivées du logiciel.
-- Redistribuer, republier ou revendre le logiciel, en tout ou en partie.
-- Copier ou réutiliser le code source dans un autre projet.
-- Supprimer ou altérer les mentions de propriété et de droit d'auteur.
-- Présenter FBP comme un logiciel créé par une autre personne.
+## 2. Autorisations
 
-### 3. Attribution
+Sous réserve du respect de cette licence, Mist Max accorde une autorisation non exclusive permettant à l'utilisateur de :
 
-Toute utilisation autorisée de FBP doit préserver les mentions de droit d'auteur et reconnaître Mist Max comme l'auteur du projet.
+- consulter et télécharger le Logiciel depuis une source autorisée ;
+- exécuter et utiliser le Logiciel à des fins personnelles, professionnelles ou commerciales ;
+- modifier le code source pour un usage personnel ou interne ;
+- redistribuer une copie non modifiée du Logiciel, conformément à l'article 3.
 
-### 4. Propriété intellectuelle
+Cette licence ne transfère aucun droit de propriété sur le Logiciel, le nom Mist Max, ses marques, ses logos ou ses autres éléments distinctifs.
 
-FBP, son code source, sa documentation et ses éléments associés restent soumis aux droits de propriété intellectuelle de leurs titulaires respectifs.
+## 3. Redistribution du Logiciel original
 
-La mise à disposition publique du projet ne constitue pas une cession de droits ni une autorisation générale de réutilisation du code source.
+La redistribution d'une copie non modifiée du Logiciel est autorisée si toutes les conditions suivantes sont respectées :
 
-### 5. Absence de garantie
+1. Fournir une copie de cette licence avec le Logiciel.
+2. Conserver les mentions de copyright et les autres mentions de propriété intellectuelle.
+3. Attribuer clairement le Logiciel à Mist Max.
+4. Ne pas prétendre que Mist Max approuve, garantit ou soutient officiellement la redistribution sans autorisation distincte.
+5. Ne pas présenter le Logiciel comme étant publié sous une licence plus permissive.
+6. Respecter les licences des composants tiers et la législation applicable.
 
-FBP est fourni « en l'état », sans garantie d'aucune sorte, dans les limites permises par la loi applicable.
+La redistribution autorisée ne transfère pas au distributeur les droits détenus par Mist Max.
 
-### 6. Retrait de l'autorisation
+## 4. Modifications et œuvres dérivées
 
-En cas de violation de cette licence, le titulaire des droits se réserve le droit de retirer les autorisations accordées, dans les limites permises par la loi applicable.
+La modification du code source est autorisée uniquement pour un usage personnel ou interne, sous réserve des conditions de cette licence.
 
-### 7. Contact et autorisations
+Sans autorisation écrite préalable de Mist Max, il est interdit de redistribuer, publier ou mettre à disposition d'autres personnes une version modifiée, un fork, un correctif ou une œuvre dérivée intégrant tout ou partie substantielle du Logiciel.
 
-Pour demander une autorisation de modification, de redistribution ou de réutilisation du code source, contactez le titulaire des droits du projet Mist Max.
+Cette restriction s'applique aux redistributions gratuites comme payantes, notamment à la publication de versions modifiées sur GitHub ou sur toute autre plateforme.
+
+Les éléments créés indépendamment, sans incorporation d'éléments protégés du Logiciel, ne sont pas automatiquement soumis à cette restriction. La qualification d'une œuvre dérivée dépend des faits et du droit applicable.
+
+## 5. Utilisation commerciale
+
+L'utilisation du Logiciel à des fins commerciales est autorisée sans redevance due à Mist Max au titre de cette licence, sous réserve des autres dispositions.
+
+Cette autorisation ne permet pas, à elle seule, de revendre ou redistribuer des versions modifiées, ni d'utiliser les marques et logos de Mist Max d'une manière laissant croire à une approbation officielle.
+
+Toute autorisation particulière peut être accordée par écrit par Mist Max.
+
+## 6. Attribution obligatoire
+
+Toute redistribution autorisée doit conserver les mentions de copyright, inclure cette licence et reconnaître Mist Max comme titulaire des droits concernés.
+
+La mention suivante peut être utilisée :
+
+> Ce logiciel contient des éléments développés par Mist Max et est distribué sous la Mist Max Proprietary License (MMPL).
+
+Cette attribution ne doit pas laisser entendre que Mist Max approuve ou garantit un produit tiers.
+
+## 7. Restrictions générales
+
+Sauf autorisation expresse de cette licence ou disposition impérative de la loi, l'utilisateur ne peut pas :
+
+- redistribuer des versions modifiées sans autorisation écrite préalable ;
+- supprimer ou altérer les mentions de propriété intellectuelle ;
+- prétendre détenir les droits appartenant à Mist Max ;
+- présenter un produit comme étant officiellement développé ou approuvé par Mist Max sans autorisation ;
+- accorder à des tiers des droits supérieurs à ceux que l'utilisateur détient.
+
+Aucune disposition ne vise à interdire un acte que la législation applicable autorise impérativement.
+
+## 8. Contributions et composants tiers
+
+Les contributions envoyées à Mist Max restent soumises aux droits de leurs auteurs, sauf accord distinct. La soumission d'une contribution ne transfère pas automatiquement sa propriété à Mist Max.
+
+Les composants de tiers restent soumis à leurs propres licences. En cas de contradiction, les droits relatifs à ces composants sont déterminés par les licences correspondantes, dans la mesure où elles s'appliquent.
+
+## 9. Durée, suspension et résiliation
+
+Les autorisations prennent effet lorsque l'utilisateur accepte les conditions ou exerce un droit accordé par cette licence, dans la mesure permise par le droit applicable.
+
+En cas de violation, Mist Max peut demander que la violation cesse et, lorsque la loi le permet, suspendre ou résilier les autorisations accordées au contrevenant. L'utilisateur doit alors cesser les usages non autorisés et remédier à la violation dans le délai raisonnable éventuellement indiqué dans une notification écrite.
+
+La résiliation ne supprime pas les droits ou obligations qui doivent survivre en vertu de la loi. Elle ne retire pas les droits indépendants accordés par des licences de tiers.
+
+## 10. Absence de garantie
+
+Dans la mesure autorisée par la loi, le Logiciel est fourni « en l'état », sans garantie expresse ou implicite, notamment concernant son adéquation à un besoin particulier, son fonctionnement continu, l'absence d'erreurs ou de vulnérabilités, sa compatibilité ou l'exactitude de sa documentation.
+
+Les garanties qui ne peuvent légalement être exclues restent applicables.
+
+## 11. Limitation de responsabilité
+
+Dans la mesure autorisée par la loi, Mist Max ne saurait être tenu responsable des dommages indirects liés à l'utilisation ou à l'impossibilité d'utiliser le Logiciel, notamment la perte de données, l'interruption d'activité ou la perte de revenus.
+
+Aucune disposition de cette licence n'exclut ou ne limite une responsabilité qui ne peut légalement être exclue ou limitée. Les présentes limitations s'interprètent conformément au droit applicable.
+
+## 12. Versions de la licence
+
+Mist Max peut publier de nouvelles versions de la MMPL. Sauf indication contraire, une nouvelle version ne modifie pas rétroactivement les conditions applicables aux copies déjà distribuées sous une version antérieure.
+
+La version applicable doit être indiquée dans le fichier de licence associé au Logiciel.
+
+## 13. Dispositions finales
+
+Le droit applicable et la juridiction compétente sont déterminés conformément aux règles de droit applicables à la situation concernée.
+
+Si une disposition est jugée invalide ou inapplicable, les autres dispositions restent applicables dans la mesure permise par la loi.
+
+Cette licence ne remplace pas un accord écrit distinct conclu entre Mist Max et un utilisateur.
 
 ---
 
-Toute utilisation de FBP implique le respect des conditions applicables de cette licence.
+**Mist Max Proprietary License (MMPL) — Version 1.0**  
+Ce texte est une licence personnalisée et n'a pas fait l'objet d'une validation juridique professionnelle.
