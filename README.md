@@ -173,23 +173,16 @@ Le dernier argument indique si l'option est obligatoire. La réponse affiche le 
 
 FBP est encore un interpréteur de base. Les paramètres de fonction, les conditions, les boucles, les valeurs de retour et les expressions arithmétiques ne sont pas encore implémentés. La connexion Discord utilise un token stocké dans `.env`. Les commandes slash peuvent répondre avec un texte fixe ou un embed défini avec `commandeEmbed(nom, titre, description, couleur)`. Ajoute des champs avec `champ(nomCommande, nomChamp, valeur)`. Les valeurs des embeds sont actuellement fixes : la récupération dynamique des informations du serveur, les options, paramètres, permissions avancées et conditions ne sont pas encore implémentés.
 
-## Tests du langage et du bot
+## Tests
+
+Lance les tests du projet avec :
 
 ```bash
 npm install
 npm test
-npm run test:simu
 ```
 
-- `npm test` lance la suite de tests habituelle.
-- `npm run test:simu` lance les tests automatiques étendus du langage et du CLI, avec `FBP_TEST_MODE=1` pour signaler le mode simulation.
-- Les tests locaux ne se connectent pas à Discord et ne nécessitent pas de token.
-- Les tests de connexion réelle à Discord seront séparés et ne devront utiliser qu'un bot et un serveur dédiés aux tests.
-
-Le mode simulation ne prouve pas à lui seul la compatibilité réelle avec l'API Discord. Les tests de chiffrement seront ajoutés avec l'implémentation du chiffrement `.env` prévue pour la version 1.2.7.
-
-Les fichiers d'essai internes se trouvent dans `tests/fixtures`. Ils ne font pas partie du paquet publié.
-
+Cette commande exécute uniquement la suite de tests normale. Les tests de simulation ne sont pas configurés pour le moment et seront ajoutés plus tard avec une commande séparée.
 
 ## Informations Discord dynamiques (v1.1.6)
 
