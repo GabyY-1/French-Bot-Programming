@@ -637,7 +637,7 @@ export class FbpCompiler {
                   await interaction.reply({ content: "Ce type de salon ne prend pas en charge de sujet.", ephemeral: true });
                   return;
                 }
-                await selectedChannel.setTopic(interaction.options.getString("sujet", true).slice(0, 1024), "Modification via FBP");
+                await selectedChannel.setTopic(interaction.options.getString("sujet", true).slice(0, 1024));
                 await interaction.reply({ content: "Sujet du salon mis à jour.", ephemeral: true });
               }
               return;
