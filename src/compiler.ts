@@ -157,6 +157,8 @@ export class FbpCompiler {
   private discordClient?: Client;
   private discordCommands = new Map<string, DiscordResponse>();
   private discordMemberEvents = new Map<string, string>();
+  private useGuildMembersIntent = false;
+  private useGuildPresencesIntent = false;
 
   constructor(options: RunOptions = {}) {
     this.output = options.onOutput ?? (value => console.log(value));
@@ -192,11 +194,37 @@ export class FbpCompiler {
     return source.trim() in values ? values[source.trim()] : "Source inconnue : " + source.trim();
   }
 
+  private collectMemberIntents(statements: Statement[], baseDir: string, visited = new Set<string>()): void {
+    for (const statement of statements) {
+      if (statement.kind === "function") {
+        this.collectMemberIntents(statement.body, baseDir, visited);
+      } else if (statement.kind === "call" && statement.name === "evenementMembre") {
+        const rawName = statement.args[0]?.trim() ?? "";
+        const eventName = rawName.length >= 2 && (rawName[0] === '"' || rawName[0] === "'")
+          ? rawName.slice(1, -1)
+          : rawName;
+        if (["arrivee", "depart", "pseudo", "roles", "statut"].includes(eventName)) this.useGuildMembersIntent = true;
+        if (eventName === "statut") this.useGuildPresencesIntent = true;
+      } else if (statement.kind === "import") {
+        const importedPath = path.resolve(baseDir, statement.source);
+        if (!visited.has(importedPath) && fs.existsSync(importedPath) && fs.statSync(importedPath).isFile()) {
+          visited.add(importedPath);
+          const importedStatements = parseFile(importedPath, fs.readFileSync(importedPath, "utf8"));
+          this.collectMemberIntents(importedStatements, path.dirname(importedPath), visited);
+        }
+      }
+    }
+  }
+
   runFile(filePath: string): void {
     const absolute = path.resolve(filePath);
     if (!fs.existsSync(absolute)) throw new FbpError(`Fichier introuvable : ${absolute}`);
     if (!fs.statSync(absolute).isFile()) throw new FbpError(`Le chemin indiqué n'est pas un fichier : ${absolute}`);
-    this.execute(parseFile(absolute, fs.readFileSync(absolute, "utf8")), path.dirname(absolute));
+    const statements = parseFile(absolute, fs.readFileSync(absolute, "utf8"));
+    this.useGuildMembersIntent = false;
+    this.useGuildPresencesIntent = false;
+    this.collectMemberIntents(statements, path.dirname(absolute), new Set([absolute]));
+    this.execute(statements, path.dirname(absolute));
   }
 
   private execute(statements: Statement[], baseDir: string): void {
@@ -257,17 +285,16 @@ export class FbpCompiler {
       const token = process.env.DISCORD_TOKEN;
       if (!token) throw new FbpError("Token Discord manquant. Ajoute DISCORD_TOKEN dans le fichier .env.", undefined, line);
 
-      const client = new Client({
-        intents: [
-          GatewayIntentBits.Guilds,
-          GatewayIntentBits.GuildMembers,
-          GatewayIntentBits.GuildPresences
-        ]
-      });
+      const intents = [
+        GatewayIntentBits.Guilds,
+        ...(this.useGuildMembersIntent ? [GatewayIntentBits.GuildMembers] : []),
+        ...(this.useGuildPresencesIntent ? [GatewayIntentBits.GuildPresences] : [])
+      ];
+      const client = new Client({ intents });
       this.discordClient = client;
 
       const renderMemberEvent = (template: string, member: import("discord.js").GuildMember | import("discord.js").PartialGuildMember, extra: Record<string, string> = {}) =>
-        template.replace(/\\{\\{([a-z0-9_-]{1,32})\\}\\}/g, (match, key: string) => {
+        template.replace(/\{\{([a-z0-9_-]{1,32})\}\}/g, (match, key: string) => {
           const values: Record<string, string> = {
             membre: member.user.username,
             pseudo: member.displayName,
@@ -336,31 +363,6 @@ export class FbpCompiler {
                   .setRequired(false)
               );
             }
-            if (response.type === "text" && response.contentAction) {
-              const action = response.contentAction;
-              const permission = action === "create-channel" || action === "delete-channel" || action === "rename-channel" || action === "topic-channel"
-                ? PermissionFlagsBits.ManageChannels
-                : action === "pin" || action === "unpin" || action === "delete" || action === "edit"
-                  ? PermissionFlagsBits.ManageMessages
-                  : PermissionFlagsBits.SendMessages;
-              builder.setDefaultMemberPermissions(permission);
-              if (action === "create-channel") {
-                builder.addStringOption(option => option.setName("nom").setDescription("Nom du salon").setRequired(true));
-                builder.addStringOption(option => option.setName("type").setDescription("Type de salon").addChoices({ name: "Texte", value: "texte" }, { name: "Vocal", value: "vocal" }).setRequired(true));
-              } else if (action === "delete-channel" || action === "rename-channel" || action === "topic-channel") {
-                builder.addChannelOption(option => option.setName("salon").setDescription("Salon concerné").setRequired(true));
-                if (action === "rename-channel") builder.addStringOption(option => option.setName("nom").setDescription("Nouveau nom").setRequired(true));
-                if (action === "topic-channel") builder.addStringOption(option => option.setName("sujet").setDescription("Nouveau sujet").setRequired(true));
-              } else {
-                builder.addChannelOption(option => option.setName("salon").setDescription("Salon concerné").setRequired(action !== "send"));
-                if (action === "send") builder.addStringOption(option => option.setName("message").setDescription("Message à envoyer").setRequired(true));
-                else {
-                  builder.addStringOption(option => option.setName("message_id").setDescription("Identifiant du message").setRequired(true));
-                  if (action === "edit") builder.addStringOption(option => option.setName("contenu").setDescription("Nouveau contenu").setRequired(true));
-                  if (action === "react") builder.addStringOption(option => option.setName("emoji").setDescription("Emoji à ajouter").setRequired(true));
-                }
-              }
-            }
             if (response.type === "text" && response.roleAction) {
               builder.setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles);
               builder.addUserOption(option => option.setName("membre").setDescription("Membre concerné").setRequired(true));
@@ -388,10 +390,15 @@ export class FbpCompiler {
             }
             if (response.type === "text" && response.contentAction) {
               const action = response.contentAction;
-              const channelAdmin = ["create-channel", "delete-channel", "rename-channel", "topic-channel", "create-category", "move-category", "delete-category", "channel-permission", "create-thread", "close-thread"].includes(action);
+              const channelAdmin = ["create-channel", "delete-channel", "rename-channel", "topic-channel", "create-category", "move-category", "delete-category", "channel-permission"].includes(action);
               const permission = channelAdmin ? PermissionFlagsBits.ManageChannels
                 : ["pin", "unpin", "delete", "edit"].includes(action) ? PermissionFlagsBits.ManageMessages
                 : action === "read" ? PermissionFlagsBits.ViewChannel
+                : action === "react" ? PermissionFlagsBits.AddReactions
+                : action === "attach" ? PermissionFlagsBits.AttachFiles
+                : action === "create-thread" ? PermissionFlagsBits.CreatePublicThreads
+                : action === "close-thread" ? PermissionFlagsBits.ManageThreads
+                : action === "send-thread" ? PermissionFlagsBits.SendMessagesInThreads
                 : PermissionFlagsBits.SendMessages;
               builder.setDefaultMemberPermissions(permission);
               if (action === "create-channel") {
@@ -611,18 +618,30 @@ export class FbpCompiler {
             const action = response.contentAction;
             const guild = interaction.guild;
             const actor = await guild.members.fetch(interaction.user.id).catch(() => null);
-            const permission = action === "create-channel" || action === "delete-channel" || action === "rename-channel" || action === "topic-channel"
-              ? PermissionFlagsBits.ManageChannels
-              : action === "pin" || action === "unpin" || action === "delete" || action === "edit"
-                ? PermissionFlagsBits.ManageMessages
-                : PermissionFlagsBits.SendMessages;
-            if (!actor?.permissions.has(permission)) {
+            const requiredPermissions = action === "read"
+              ? [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.ReadMessageHistory]
+              : action === "attach"
+                ? [PermissionFlagsBits.SendMessages, PermissionFlagsBits.AttachFiles]
+                : action === "react"
+                  ? [PermissionFlagsBits.AddReactions]
+                  : action === "create-thread"
+                    ? [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.CreatePublicThreads]
+                    : action === "send-thread"
+                      ? [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessagesInThreads]
+                      : action === "close-thread"
+                        ? [PermissionFlagsBits.ManageThreads]
+                        : ["create-channel", "delete-channel", "rename-channel", "topic-channel", "create-category", "move-category", "delete-category", "channel-permission"].includes(action)
+                          ? [PermissionFlagsBits.ManageChannels]
+                          : ["pin", "unpin", "delete", "edit"].includes(action)
+                            ? [PermissionFlagsBits.ManageMessages]
+                            : [PermissionFlagsBits.SendMessages];
+            if (!actor || !requiredPermissions.every(permission => actor.permissions.has(permission))) {
               await interaction.reply({ content: "Tu n'as pas la permission nécessaire pour cette action.", ephemeral: true });
               return;
             }
             const botMember = guild.members.me;
-            if (!botMember?.permissions.has(permission)) {
-              await interaction.reply({ content: "Le bot ne possède pas la permission nécessaire.", ephemeral: true });
+            if (!botMember || !requiredPermissions.every(permission => botMember.permissions.has(permission))) {
+              await interaction.reply({ content: "Le bot ne possède pas toutes les permissions nécessaires.", ephemeral: true });
               return;
             }
             if (action === "create-category") {
@@ -776,9 +795,9 @@ export class FbpCompiler {
               const pages: string[] = [];
               let page = "";
               for (const entry of entries) {
-                const parts = entry.match(/[\\s\\S]{1,1700}/g) ?? [entry];
+                const parts = entry.match(/[\s\S]{1,1700}/g) ?? [entry];
                 for (const part of parts) {
-                  const next = page ? page + "\\n" + part : part;
+                  const next = page ? page + "\n" + part : part;
                   if (next.length > 1900) {
                     pages.push(page);
                     page = part;
@@ -897,7 +916,7 @@ export class FbpCompiler {
             else if (response.roleAction === "remove") await targetMember.roles.remove(role, "Commande FBP de gestion des rôles");
             const content = response.roleAction === "check"
               ? (targetMember.roles.cache.has(role.id) ? targetMember.user.username + " possède le rôle " + role.name + "." : targetMember.user.username + " ne possède pas le rôle " + role.name + ".")
-              : response.content.replace(/\\{\\{membre\\}\\}/g, targetMember.user.username).replace(/\\{\\{role\\}\\}/g, role.name);
+              : response.content.replace(/\{\{membre\}\}/g, targetMember.user.username).replace(/\{\{role\}\}/g, role.name);
             await interaction.reply({ content, ephemeral: response.ephemeral ?? false });
             return;
           }
