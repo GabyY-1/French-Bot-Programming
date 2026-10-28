@@ -1535,7 +1535,7 @@ export class FbpCompiler {
         if (!channel || !channel.isVoiceBased() || !("guild" in channel) || !channel.guild) throw new Error("Le salon indiqué doit être un salon vocal de serveur.");
         const guild = channel.guild as import("discord.js").Guild;
         const options = { name: eventName, description: description || undefined, scheduledStartTime: start, privacyLevel: GuildScheduledEventPrivacyLevel.GuildOnly, entityType: GuildScheduledEventEntityType.Voice, channel: channel.id } as Parameters<typeof guild.scheduledEvents.create>[0];
-        return guild.scheduledEvents.create(options);
+        return guild.scheduledEvents.create(options) as any;
       }).then(event => this.output("Événement créé : " + event.name + " (ID " + event.id + ").")).catch(error => this.output("Échec de la création de l’événement : " + (error instanceof Error ? error.message : String(error))));
       return;
     }
