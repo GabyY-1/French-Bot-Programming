@@ -1533,7 +1533,9 @@ export class FbpCompiler {
       if (!/^\d{17,20}$/.test(channelId) || !eventName.trim() || eventName.length > 100 || Number.isNaN(start.getTime()) || start.getTime() <= Date.now() || description.length > 1000) throw new FbpError("Salon, nom, date ou description d’événement invalide.", undefined, line);
       void this.discordClient.channels.fetch(channelId).then(async channel => {
         if (!channel || !channel.isVoiceBased() || !("guild" in channel) || !channel.guild) throw new Error("Le salon indiqué doit être un salon vocal de serveur.");
-        return channel.guild.scheduledEvents.create({ name: eventName, description: description || undefined, scheduledStartTime: start, privacyLevel: GuildScheduledEventPrivacyLevel.GuildOnly, entityType: GuildScheduledEventEntityType.Voice, channel: channel.id });
+        const guild = channel.guild as import("discord.js").Guild;
+        const options = { name: eventName, description: description || undefined, scheduledStartTime: start, privacyLevel: GuildScheduledEventPrivacyLevel.GuildOnly, entityType: GuildScheduledEventEntityType.Voice, channel: channel.id } as Parameters<typeof guild.scheduledEvents.create>[0];
+        return guild.scheduledEvents.create(options);
       }).then(event => this.output("Événement créé : " + event.name + " (ID " + event.id + ").")).catch(error => this.output("Échec de la création de l’événement : " + (error instanceof Error ? error.message : String(error))));
       return;
     }
@@ -1561,9 +1563,9 @@ export class FbpCompiler {
       if (values.length < 4 || values.length > 7 || values.some(v => typeof v !== "string")) throw new FbpError('Utilisation : sondageCreer("ID_SALON", "Question", "Choix 1", "Choix 2", ...).', undefined, line);
       const [channelId, question, ...answers] = values as string[];
       if (!/^\d{17,20}$/.test(channelId) || !question.trim() || question.length > 300 || answers.length < 2 || answers.length > 5 || answers.some(a => !a.trim() || a.length > 55)) throw new FbpError("Le sondage doit contenir une question et de 2 à 5 choix valides.", undefined, line);
-      void this.discordClient.channels.fetch(channelId).then(channel => {
+      void this.discordClient.channels.fetch(channelId).then(async channel => {
         if (!channel || !("send" in channel) || typeof channel.send !== "function") throw new Error("Ce salon ne permet pas de publier un sondage.");
-        return channel.send({ poll: { question: { text: question }, answers: answers.map(text => ({ text })), duration: 24, allowMultiselect: false } });
+        await channel.send({ poll: { question: { text: question }, answers: answers.map(text => ({ text })), duration: 24, allowMultiselect: false } });
       }).then(() => this.output("Sondage publié.")).catch(error => this.output("Échec du sondage : " + String(error)));
       return;
     }
