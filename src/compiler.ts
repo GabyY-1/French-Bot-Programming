@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { FbpError } from "./errors";
-import { Client, EmbedBuilder, GatewayIntentBits, Partials, PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
+import { ApplicationCommandType, Client, ContextMenuCommandBuilder, EmbedBuilder, GatewayIntentBits, GuildScheduledEventEntityType, GuildScheduledEventPrivacyLevel, Partials, PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
 import dotenv from "dotenv";
 
 type ValueType = "texte" | "nombre" | "booleen" | "inconnu";
@@ -156,6 +156,7 @@ export class FbpCompiler {
   private connectDiscord: boolean;
   private discordClient?: Client;
   private discordCommands = new Map<string, DiscordResponse>();
+  private discordContextCommands = new Map<string, "utilisateur" | "message">();
   private discordMemberEvents = new Map<string, string>();
   private discordEvents = new Map<string, string>();
   private useGuildMembersIntent = false;
@@ -164,6 +165,7 @@ export class FbpCompiler {
   private useMessageReactionsIntent = false;
   private useVoiceStatesIntent = false;
   private useGuildModerationIntent = false;
+  private useDirectMessagesIntent = false;
 
   constructor(options: RunOptions = {}) {
     this.output = options.onOutput ?? (value => console.log(value));
@@ -216,6 +218,10 @@ export class FbpCompiler {
         this.useMessageReactionsIntent = true;
       } else if (statement.kind === "call" && statement.name === "evenementVocal") {
         this.useVoiceStatesIntent = true;
+      } else if (statement.kind === "call" && statement.name === "evenementPrive") {
+        this.useDirectMessagesIntent = true;
+      } else if (statement.kind === "call" && ["vocalRejoindre", "vocalQuitter", "evenementVocal"].includes(statement.name)) {
+        this.useVoiceStatesIntent = true;
       } else if (statement.kind === "call" && statement.name === "evenementServeur") {
         const eventName = statement.args[0]?.replace(/^["']|["']$/g, "") ?? "";
         if (["bannissement", "debannissement", "moderation"].includes(eventName)) this.useGuildModerationIntent = true;
@@ -241,6 +247,7 @@ export class FbpCompiler {
     this.useMessageReactionsIntent = false;
     this.useVoiceStatesIntent = false;
     this.useGuildModerationIntent = false;
+    this.useDirectMessagesIntent = false;
     this.collectMemberIntents(statements, path.dirname(absolute), new Set([absolute]));
     this.execute(statements, path.dirname(absolute));
   }
@@ -310,11 +317,12 @@ export class FbpCompiler {
         ...(this.useMessageContentIntent ? [GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] : []),
         ...(this.useMessageReactionsIntent ? [GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMessageReactions] : []),
         ...(this.useVoiceStatesIntent ? [GatewayIntentBits.GuildVoiceStates] : []),
+        ...(this.useDirectMessagesIntent ? [GatewayIntentBits.DirectMessages] : []),
         ...(this.useGuildModerationIntent ? [GatewayIntentBits.GuildModeration] : [])
       ];
       const client = new Client({
         intents,
-        partials: this.useMessageReactionsIntent ? [Partials.Message, Partials.Channel, Partials.Reaction, Partials.User] : []
+        partials: [...(this.useMessageReactionsIntent ? [Partials.Message, Partials.Reaction, Partials.User] : []), ...(this.useMessageReactionsIntent || this.useDirectMessagesIntent ? [Partials.Channel] : [])]
       });
       this.discordClient = client;
 
@@ -651,10 +659,16 @@ export class FbpCompiler {
             }
             return builder.toJSON();
           });
+          const contextCommands = [...this.discordContextCommands.entries()].map(([commandName, target]) =>
+            new ContextMenuCommandBuilder()
+              .setName(commandName)
+              .setType(target === "utilisateur" ? ApplicationCommandType.User : ApplicationCommandType.Message)
+              .toJSON()
+          );
           const manager = client.application?.commands;
           if (!manager) throw new Error("L'application Discord n'est pas disponible.");
           const existing = await manager.fetch();
-          for (const command of commands) {
+          for (const command of [...commands, ...contextCommands]) {
             const registered = existing.find(item => item.name === command.name);
             if (registered) await manager.edit(registered.id, command);
             else await manager.create(command);
@@ -667,6 +681,14 @@ export class FbpCompiler {
       });
 
       client.on("interactionCreate", async interaction => {
+        if (interaction.isUserContextMenuCommand()) {
+          await interaction.reply({ content: "Utilisateur sélectionné : " + interaction.targetUser.username + " (" + interaction.targetUser.id + ")", ephemeral: true });
+          return;
+        }
+        if (interaction.isMessageContextMenuCommand()) {
+          await interaction.reply({ content: "Message sélectionné : " + interaction.targetMessage.content.slice(0, 1800) + "\nID : " + interaction.targetMessage.id, ephemeral: true });
+          return;
+        }
         if (interaction.isAutocomplete()) {
           const response = this.discordCommands.get(interaction.commandName);
           if (!response) return;
@@ -1493,6 +1515,27 @@ export class FbpCompiler {
       return;
     }
 
+    if (name === "commandeContextuelleUtilisateur" || name === "commandeContextuelleMessage") {
+      if (!this.discordClient) throw new FbpError("Appelle connexion() avant de déclarer une commande contextuelle.", undefined, line);
+      if (values.length !== 1 || typeof values[0] !== "string") throw new FbpError('Utilisation : commandeContextuelleUtilisateur("nom") ou commandeContextuelleMessage("nom").', undefined, line);
+      const commandName = values[0].trim();
+      if (!commandName || commandName.length > 32) throw new FbpError("Le nom d’une commande contextuelle doit contenir de 1 à 32 caractères.", undefined, line);
+      if (this.discordCommands.has(commandName) || this.discordContextCommands.has(commandName)) throw new FbpError("Une commande nommée « " + commandName + " » existe déjà.", undefined, line);
+      this.discordContextCommands.set(commandName, name === "commandeContextuelleUtilisateur" ? "utilisateur" : "message");
+      return;
+    }
+    if (name === "evenementCreer") {
+      if (!this.discordClient) throw new FbpError("Appelle connexion() avant evenementCreer().", undefined, line);
+      if (values.length < 3 || values.length > 4 || values.some(value => typeof value !== "string")) throw new FbpError('Utilisation : evenementCreer("ID_SALON_VOCAL", "Nom", "Date ISO", "Description").', undefined, line);
+      const [channelId, eventName, startValue, description = ""] = values as string[];
+      const start = new Date(startValue);
+      if (!/^\d{17,20}$/.test(channelId) || !eventName.trim() || eventName.length > 100 || Number.isNaN(start.getTime()) || start.getTime() <= Date.now() || description.length > 1000) throw new FbpError("Salon, nom, date ou description d’événement invalide.", undefined, line);
+      void this.discordClient.channels.fetch(channelId).then(async channel => {
+        if (!channel || !channel.isVoiceBased() || !("guild" in channel) || !channel.guild) throw new Error("Le salon indiqué doit être un salon vocal de serveur.");
+        return channel.guild.scheduledEvents.create({ name: eventName, description: description || undefined, scheduledStartTime: start, privacyLevel: GuildScheduledEventPrivacyLevel.GuildOnly, entityType: GuildScheduledEventEntityType.Voice, channel: channel.id });
+      }).then(event => this.output("Événement créé : " + event.name + " (ID " + event.id + ").")).catch(error => this.output("Échec de la création de l’événement : " + (error instanceof Error ? error.message : String(error))));
+      return;
+    }
     if (name === "messagePrive") {
       if (!this.discordClient) throw new FbpError("Appelle connexion() avant messagePrive().", undefined, line);
       if (values.length !== 2 || values.some(v => typeof v !== "string")) throw new FbpError('Utilisation : messagePrive("ID_MEMBRE", "message").', undefined, line);
