@@ -109,7 +109,42 @@ function parseFile(file: string, source: string): Statement[] {
 
 type DiscordOptionType = "texte" | "nombre" | "entier" | "booleen" | "salon" | "utilisateur" | "role";
 type DiscordOption = { name: string; description: string; type: DiscordOptionType; required: boolean; choices?: Array<{ name: string; value: string | number }>; autocomplete?: boolean; minValue?: number; maxValue?: number };
-type DiscordResponse = ({ type: "text"; content: string; ephemeral?: boolean; deferred?: boolean; adminOnly?: boolean; roleAction?: "add" | "remove"; options?: DiscordOption[] } | { type: "embed"; title: string; description: string; color: string; fields: Array<{ name: string; value: string; dynamic?: boolean }>; userOption?: { name: string; description: string }; options?: DiscordOption[] }) & { subcommands?: Array<{ name: string; description: string; response: DiscordResponse }>; groups?: Array<{ name: string; description: string; subcommands: Array<{ name: string; description: string; response: DiscordResponse }> } };
+type DiscordResponse =
+  (
+    | {
+        type: "text";
+        content: string;
+        ephemeral?: boolean;
+        deferred?: boolean;
+        adminOnly?: boolean;
+        roleAction?: "add" | "remove";
+        options?: DiscordOption[];
+      }
+    | {
+        type: "embed";
+        title: string;
+        description: string;
+        color: string;
+        fields: Array<{ name: string; value: string; dynamic?: boolean }>;
+        userOption?: { name: string; description: string };
+        options?: DiscordOption[];
+      }
+  ) & {
+    subcommands?: Array<{
+      name: string;
+      description: string;
+      response: DiscordResponse;
+    }>;
+    groups?: Array<{
+      name: string;
+      description: string;
+      subcommands: Array<{
+        name: string;
+        description: string;
+        response: DiscordResponse;
+      }>;
+    }>;
+  };
 
 export class FbpCompiler {
   private variables = new Map<string, { type: ValueType; value: unknown }>();
