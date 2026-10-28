@@ -566,7 +566,7 @@ export class FbpCompiler {
             const reason = action === "ban" || action === "kick" ? interaction.options.getString("raison") ?? undefined : undefined;
             if (action === "unban") {
               const userId = interaction.options.getString("utilisateur_id", true).trim();
-              if (!/^\\d{17,20}$/.test(userId)) {
+              if (!/^\d{17,20}$/.test(userId)) {
                 await interaction.reply({ content: "L'identifiant Discord fourni est invalide.", ephemeral: true });
                 return;
               }
