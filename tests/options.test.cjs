@@ -113,12 +113,12 @@ test("les commandes de messages et de salons sont déclarables", () => {
     'commandeSupprimerSalon("supprimer-salon")',
     'commandeRenommerSalon("renommer-salon")',
     'commandeSujetSalon("sujet-salon")'
-  ].join("\\n")));
+  ].join("\n")));
 });
 
 test("les noms invalides de commandes de salon sont refusés", () => {
   assert.throws(
-    () => runSource(['connexion()', 'commandeCreerSalon("Nom invalide")'].join("\\n")),
+    () => runSource(['connexion()', 'commandeCreerSalon("Nom invalide")'].join("\n")),
     /nom de la commande slash est invalide/
   );
 });
