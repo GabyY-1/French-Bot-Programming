@@ -6,7 +6,7 @@ Le langage permet de déclarer des commandes slash, des réponses simples ou int
 
 ## Version actuelle
 
-La branche de développement prépare FBP 1.3.2. La version 1.3.1 ajoute les commandes de gestion des messages, salons, catégories et fils de discussion. La version 1.3.2 étend le langage avec les événements Discord : messages, réactions, interactions, salons vocaux et événements du serveur. La disponibilité sur npm dépend de la publication de la version.
+La version actuelle est FBP 1.3.3. La version 1.3.1 ajoute les commandes de gestion des messages, salons, catégories et fils de discussion. La version 1.3.2 étend le langage avec les événements Discord : messages, réactions, interactions, salons vocaux et événements du serveur. La version 1.3.3 ajoute des actions pour les invitations, sondages, webhooks, messages privés et connexions vocales. La disponibilité sur npm dépend de la publication de la version.
 
 ## Fonctionnalités
 
@@ -479,3 +479,4 @@ commandeRetirerRole("retirer-role")
 Ces déclarations créent les commandes slash `/ajouter-role` et `/retirer-role`, chacune avec un sélecteur de membre et de rôle. Elles nécessitent la permission **Gérer les rôles**. Le bot vérifie également la hiérarchie des rôles et refuse les rôles gérés par une intégration ou placés trop haut. Dans le portail Discord, donne au bot la permission **Gérer les rôles** et place son rôle au-dessus des rôles qu'il doit gérer.
 
 Les réponses sont privées à l'utilisateur qui lance la commande. Discord reste l'autorité finale : le bot ne peut pas dépasser les permissions de son serveur ni sa propre position dans la hiérarchie.
+\n\n## Fonctionnalités avancées (v1.3.3)\n\n```fbp\nconnexion()\n\ninvitationCreer("ID_SALON", 3600)\nsondageCreer("ID_SALON", "Quelle option ?", "Option A", "Option B")\nmessagePrive("ID_MEMBRE", "Bonjour !")\nwebhookCreer("ID_SALON", "Mon webhook")\nwebhookEnvoyer("URL_WEBHOOK", "Message envoyé via webhook")\nevenementPrive("DM de {{pseudo}} : {{message}}")\n```\n\nLes actions Discord sont exécutées de manière asynchrone. Le bot doit disposer des permissions nécessaires pour le salon et l’action demandée. Les sondages nécessitent une version de Discord.js et une API Discord qui prennent en charge les sondages. Les fonctionnalités vocales utilisent `@discordjs/voice`.\n
