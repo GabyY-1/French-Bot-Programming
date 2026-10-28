@@ -107,10 +107,10 @@ function parseFile(file: string, source: string): Statement[] {
   return root;
 }
 
-type DiscordOptionType = "texte" | "nombre" | "entier" | "booleen" | "salon";
-type DiscordOption = { name: string; description: string; type: DiscordOptionType; required: boolean; choices?: Array<{ name: string; value: string | number }>; minValue?: number; maxValue?: number };
+type DiscordOptionType = "texte" | "nombre" | "entier" | "booleen" | "salon" | "utilisateur" | "role";
+type DiscordOption = { name: string; description: string; type: DiscordOptionType; required: boolean; choices?: Array<{ name: string; value: string | number }>; autocomplete?: boolean; minValue?: number; maxValue?: number };
 type DiscordResponse =
-  | { type: "text"; content: string; ephemeral?: boolean; adminOnly?: boolean; roleAction?: "add" | "remove"; options?: DiscordOption[] }
+  | { type: "text"; content: string; ephemeral?: boolean; deferred?: boolean; adminOnly?: boolean; roleAction?: "add" | "remove"; options?: DiscordOption[] }
   | { type: "embed"; title: string; description: string; color: string; fields: Array<{ name: string; value: string; dynamic?: boolean }>; userOption?: { name: string; description: string }; options?: DiscordOption[] };
 
 export class FbpCompiler {
@@ -249,11 +249,13 @@ export class FbpCompiler {
               const add = {
                 texte: () => builder.addStringOption(item => {
                   item.setName(option.name).setDescription(option.description).setRequired(option.required);
+                  if (option.autocomplete) item.setAutocomplete(true);
                   for (const choice of option.choices ?? []) if (typeof choice.value === "string") item.addChoices({ name: choice.name, value: choice.value });
                   return item;
                 }),
                 nombre: () => builder.addNumberOption(item => {
                   item.setName(option.name).setDescription(option.description).setRequired(option.required);
+                  if (option.autocomplete) item.setAutocomplete(true);
                   if (option.minValue !== undefined) item.setMinValue(option.minValue);
                   if (option.maxValue !== undefined) item.setMaxValue(option.maxValue);
                   for (const choice of option.choices ?? []) if (typeof choice.value === "number") item.addChoices({ name: choice.name, value: choice.value });
@@ -267,7 +269,9 @@ export class FbpCompiler {
                   return item;
                 }),
                 booleen: () => builder.addBooleanOption(item => item.setName(option.name).setDescription(option.description).setRequired(option.required)),
-                salon: () => builder.addChannelOption(item => item.setName(option.name).setDescription(option.description).setRequired(option.required))
+                salon: () => builder.addChannelOption(item => item.setName(option.name).setDescription(option.description).setRequired(option.required)),
+                utilisateur: () => builder.addUserOption(item => item.setName(option.name).setDescription(option.description).setRequired(option.required)),
+                role: () => builder.addRoleOption(item => item.setName(option.name).setDescription(option.description).setRequired(option.required))
               }[option.type];
               add();
             }
@@ -289,6 +293,19 @@ export class FbpCompiler {
       });
 
       client.on("interactionCreate", async interaction => {
+        if (interaction.isAutocomplete()) {
+          const response = this.discordCommands.get(interaction.commandName);
+          if (!response) return;
+          const focused = interaction.options.getFocused(true);
+          const option = response.options?.find(item => item.name === focused.name && item.autocomplete);
+          const query = String(focused.value).toLocaleLowerCase();
+          const suggestions = (option?.choices ?? [])
+            .filter(choice => choice.name.toLocaleLowerCase().includes(query) || String(choice.value).toLocaleLowerCase().includes(query))
+            .slice(0, 25)
+            .map(choice => ({ name: choice.name, value: choice.value }));
+          await interaction.respond(suggestions).catch(() => undefined);
+          return;
+        }
         if (!interaction.isChatInputCommand()) return;
         const response = this.discordCommands.get(interaction.commandName);
         if (response === undefined) return;
@@ -342,7 +359,13 @@ export class FbpCompiler {
           for (const option of response.options ?? []) {
             let value: string | null = null;
             if (option.type === "texte") value = interaction.options.getString(option.name);
-            else if (option.type === "nombre") {
+            else if (option.type === "utilisateur") {
+              const user = interaction.options.getUser(option.name);
+              value = user === null ? null : user.username;
+            } else if (option.type === "role") {
+              const role = interaction.options.getRole(option.name);
+              value = role === null ? null : "<@&" + role.id + ">";
+            } else if (option.type === "nombre") {
               const number = interaction.options.getNumber(option.name);
               value = number === null ? null : String(number);
             } else if (option.type === "entier") {
@@ -365,7 +388,12 @@ export class FbpCompiler {
             const content = response.content.replace(/\{\{([a-z0-9_-]{1,32})\}\}/g, (match, name: string) =>
               optionValues.has(name) ? optionValues.get(name)! : match
             );
-            await interaction.reply({ content, ephemeral: response.ephemeral ?? false });
+            if (response.deferred) {
+              await interaction.deferReply({ ephemeral: response.ephemeral ?? false });
+              await interaction.editReply({ content });
+            } else {
+              await interaction.reply({ content, ephemeral: response.ephemeral ?? false });
+            }
           } else {
             const embed = new EmbedBuilder()
               .setTitle(response.title)
@@ -507,7 +535,7 @@ export class FbpCompiler {
       option.maxValue = maximum;
       return;
     }
-    if (name === "optionTexte" || name === "optionNombre" || name === "optionEntier" || name === "optionBooleen" || name === "optionSalon") {
+    if (name === "optionTexte" || name === "optionNombre" || name === "optionEntier" || name === "optionBooleen" || name === "optionSalon" || name === "optionUtilisateur" || name === "optionRole") {
       if (values.length < 3 || values.length > 4 || values.some(value => typeof value !== "string" && typeof value !== "boolean")) {
         throw new FbpError("Utilisation : optionTexte/Nombre/Entier/Booleen/Salon(nomCommande, nomOption, description, obligatoire).", undefined, line);
       }
@@ -523,7 +551,7 @@ export class FbpCompiler {
       const options = command.options ?? (command.options = []);
       if (options.some(option => option.name === optionName) || (command.type === "embed" && command.userOption?.name === optionName)) throw new FbpError("L'option « " + optionName + " » existe déjà pour cette commande.", undefined, line);
       if (options.length + (command.type === "embed" && command.userOption ? 1 : 0) >= 25) throw new FbpError("Une commande slash Discord ne peut pas contenir plus de 25 options.", undefined, line);
-      const type: DiscordOptionType = name === "optionTexte" ? "texte" : name === "optionNombre" ? "nombre" : name === "optionEntier" ? "entier" : name === "optionBooleen" ? "booleen" : "salon";
+      const type: DiscordOptionType = name === "optionTexte" ? "texte" : name === "optionNombre" ? "nombre" : name === "optionEntier" ? "entier" : name === "optionBooleen" ? "booleen" : name === "optionSalon" ? "salon" : name === "optionUtilisateur" ? "utilisateur" : "role";
       options.push({ name: optionName, description, type, required });
       return;
     }
