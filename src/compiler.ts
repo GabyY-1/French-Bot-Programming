@@ -750,6 +750,36 @@ export class FbpCompiler {
               await interaction.reply({ content: "Ce salon ne permet pas d'envoyer des messages.", ephemeral: true });
               return;
             }
+            if (action === "read") {
+              if (!("messages" in channel) || !channel.messages || typeof channel.messages.fetch !== "function") {
+                await interaction.reply({ content: "Ce salon ne permet pas de lire l'historique.", ephemeral: true });
+                return;
+              }
+              const count = interaction.options.getInteger("nombre", true);
+              const messages = await channel.messages.fetch({ limit: count });
+              const summary = [...messages.values()].reverse().map(message => {
+                const text = message.content || (message.attachments.size ? "[pièce jointe]" : "[message sans texte]");
+                return "[" + message.createdAt.toISOString() + "] " + message.author.username + ": " + text.slice(0, 500);
+              }).join("\\n");
+              await interaction.reply({ content: summary.slice(0, 1900) || "Aucun message trouvé.", ephemeral: true });
+              return;
+            }
+            if (action === "attach") {
+              const url = interaction.options.getString("url", true).trim();
+              const messageText = interaction.options.getString("message") ?? undefined;
+              let parsedUrl: URL;
+              try { parsedUrl = new URL(url); } catch {
+                await interaction.reply({ content: "L'URL du fichier est invalide.", ephemeral: true });
+                return;
+              }
+              if (parsedUrl.protocol !== "https:") {
+                await interaction.reply({ content: "Le fichier doit être accessible via une URL HTTPS.", ephemeral: true });
+                return;
+              }
+              await channel.send({ content: messageText, files: [url] });
+              await interaction.reply({ content: "Fichier envoyé.", ephemeral: true });
+              return;
+            }
             if (action === "send") {
               const content = interaction.options.getString("message", true);
               if (content.length > 2000) {
