@@ -56,6 +56,7 @@ export function formatDiscordError(error: unknown): string {
   const safeMessage = message
     .replace(/(Bot\s+)[A-Za-z0-9._-]{20,}/gi, "$1[masqué]")
     .replace(/(Bearer\s+)[A-Za-z0-9._-]{20,}/gi, "$1[masqué]")
+    .replace(/\b[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{6,}\.[A-Za-z0-9_-]{20,}\b/g, "[token masqué]")
     .replace(/(discord(?:app)?\.com\/api\/webhooks\/\d+\/)[^\s/]+/gi, "$1[masqué]")
     .trim();
 
