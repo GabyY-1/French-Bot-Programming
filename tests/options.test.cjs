@@ -10,7 +10,7 @@ function runSource(source) {
   const file = path.join(dir, "main.fbp");
   fs.writeFileSync(file, source, "utf8");
   try {
-    new FbpCompiler({ onOutput: () => {} }).runFile(file);
+    new FbpCompiler({ onOutput: () => {}, connectDiscord: false }).runFile(file);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
