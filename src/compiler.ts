@@ -677,7 +677,48 @@ export class FbpCompiler {
               await interaction.reply({ content: "Salon créé : " + channel.toString(), ephemeral: true });
               return;
             }
-            const selectedChannel = interaction.options.getChannel("salon", action !== "send");
+            if (action === "delete-category") {
+              const category = interaction.options.getChannel("categorie", true);
+              if (!("type" in category) || category.type !== 4 || !("guild" in category) || category.guild.id !== guild.id) {
+                await interaction.reply({ content: "La catégorie sélectionnée est invalide.", ephemeral: true });
+                return;
+              }
+              await category.delete("Suppression via FBP");
+              await interaction.reply({ content: "Catégorie supprimée.", ephemeral: true });
+              return;
+            }
+            if (action === "move-category") {
+              const channelToMove = interaction.options.getChannel("salon", true);
+              const category = interaction.options.getChannel("categorie", true);
+              if (!("guild" in channelToMove) || channelToMove.guild.id !== guild.id || !("type" in category) || category.type !== 4 || !("setParent" in channelToMove) || typeof channelToMove.setParent !== "function") {
+                await interaction.reply({ content: "Le salon ou la catégorie est invalide.", ephemeral: true });
+                return;
+              }
+              await channelToMove.setParent(category.id, { lockPermissions: false, reason: "Déplacement via FBP" });
+              await interaction.reply({ content: "Salon déplacé dans la catégorie.", ephemeral: true });
+              return;
+            }
+            if (action === "channel-permission") {
+              const channelForPermission = interaction.options.getChannel("salon", true);
+              const role = interaction.options.getRole("role", true);
+              const permissionName = interaction.options.getString("permission", true);
+              const state = interaction.options.getString("etat", true);
+              if (!("guild" in channelForPermission) || channelForPermission.guild.id !== guild.id || !("permissionOverwrites" in channelForPermission) || !channelForPermission.permissionOverwrites || typeof channelForPermission.permissionOverwrites.edit !== "function") {
+                await interaction.reply({ content: "Ce salon ne prend pas en charge les permissions.", ephemeral: true });
+                return;
+              }
+              const allowed = ["ViewChannel", "SendMessages", "ReadMessageHistory", "AttachFiles", "AddReactions"];
+              if (!allowed.includes(permissionName)) {
+                await interaction.reply({ content: "Permission non prise en charge.", ephemeral: true });
+                return;
+              }
+              const overwrite = state === "reset" ? null : { [permissionName]: state === "allow" };
+              if (overwrite === null) await channelForPermission.permissionOverwrites.delete(role.id, "Réinitialisation via FBP");
+              else await channelForPermission.permissionOverwrites.edit(role.id, overwrite, { reason: "Modification des permissions via FBP" });
+              await interaction.reply({ content: "Permissions du salon mises à jour.", ephemeral: true });
+              return;
+            }
+            const selectedChannel = interaction.options.getChannel("salon", !["send"].includes(action));
             if (action === "delete-channel" || action === "rename-channel" || action === "topic-channel") {
               if (!selectedChannel || !("guild" in selectedChannel) || selectedChannel.guild.id !== guild.id) {
                 await interaction.reply({ content: "Salon invalide.", ephemeral: true });
