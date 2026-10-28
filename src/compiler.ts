@@ -326,6 +326,8 @@ export class FbpCompiler {
         partials: [...(this.useMessageReactionsIntent ? [Partials.Message, Partials.Reaction, Partials.User] : []), ...(this.useMessageReactionsIntent || this.useDirectMessagesIntent ? [Partials.Channel] : [])]
       });
       this.discordClient = client;
+      client.on("error", error => this.output("Erreur de connexion Discord : " + formatDiscordError(error)));
+      client.on("shardError", error => this.output("Erreur de passerelle Discord : " + formatDiscordError(error)));
 
       const renderMemberEvent = (template: string, member: import("discord.js").GuildMember | import("discord.js").PartialGuildMember, extra: Record<string, string> = {}) =>
         template.replace(/\{\{([a-z0-9_-]{1,32})\}\}/g, (match, key: string) => {
@@ -1593,7 +1595,7 @@ export class FbpCompiler {
         const guildChannel = channel as import("discord.js").GuildChannel;
         if (!botMember || !guildChannel.permissionsFor(botMember).has(PermissionFlagsBits.ManageWebhooks)) throw new Error("Le bot doit disposer de la permission Gérer les webhooks dans ce salon.");
         return channel.createWebhook({ name: webhookName });
-      }).then(webhook => this.output("Webhook créé : " + webhook.url)).catch(error => this.output("Échec du webhook : " + formatDiscordError(error)));
+      }).then(() => this.output("Webhook créé. L'URL contient un secret : ne la publie pas et ne la place pas dans un dépôt partagé.")).catch(error => this.output("Échec du webhook : " + formatDiscordError(error)));
       return;
     }
     if (name === "webhookEnvoyer") {
