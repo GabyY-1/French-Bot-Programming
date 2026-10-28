@@ -13,6 +13,7 @@ type Statement =
 
 export interface RunOptions {
   onOutput?: (value: unknown) => void;
+  connectDiscord?: boolean;
 }
 
 function valueType(value: string): ValueType {
@@ -117,11 +118,13 @@ export class FbpCompiler {
   private functions = new Map<string, Statement & { kind: "function" }>();
   private imports = new Map<string, string>();
   private output: (value: unknown) => void;
+  private connectDiscord: boolean;
   private discordClient?: Client;
   private discordCommands = new Map<string, DiscordResponse>();
 
   constructor(options: RunOptions = {}) {
     this.output = options.onOutput ?? (value => console.log(value));
+    this.connectDiscord = options.connectDiscord ?? true;
   }
 
   private resolveDiscordValue(
@@ -210,6 +213,10 @@ export class FbpCompiler {
     }
     if (name === "connexion") {
       if (this.discordClient) throw new FbpError("La connexion Discord est déjà initialisée.", undefined, line);
+      if (this.connectDiscord === false) {
+        this.discordClient = {} as Client;
+        return;
+      }
       dotenv.config();
       const token = process.env.DISCORD_TOKEN;
       if (!token) throw new FbpError("Token Discord manquant. Ajoute DISCORD_TOKEN dans le fichier .env.", undefined, line);
