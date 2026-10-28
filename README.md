@@ -172,17 +172,32 @@ optionSalon("configurer", "salon", "Choisis un salon", true)
 
 Le dernier argument indique si l'option est obligatoire. La réponse affiche le nom du salon précédé de `#`. Cette option peut être ajoutée aux commandes texte ou aux commandes embed, comme les autres options slash.
 
-## Messages et salons (prévu pour la v1.3.1)
+## Messages et salons (développement v1.3.1)
 
-Ces fonctionnalités sont prévues pour une prochaine version et ne sont pas encore disponibles dans le package publié. Elles seront ajoutées puis testées avant la publication de FBP 1.3.1.
+Les commandes ci-dessous sont disponibles dans la branche de développement. Elles ne sont pas encore publiées sur npm.
 
-- Envoyer, lire, modifier et supprimer des messages
-- Ajouter et retirer des réactions emoji
-- Gérer les pièces jointes et les fichiers
-- Créer, modifier et supprimer des salons
-- Gérer les permissions et les catégories
-- Épingler et désépingler des messages
-- Créer et gérer les fils de discussion
+```fbp
+connexion()
+
+commandeEnvoyerMessage("envoyer")
+commandeModifierMessage("modifier")
+commandeSupprimerMessage("supprimer")
+commandeReagirMessage("reagir")
+commandeEpinglerMessage("epingler")
+commandeDesepinglerMessage("desepingler")
+
+commandeCreerSalon("creer-salon")
+commandeSupprimerSalon("supprimer-salon")
+commandeRenommerSalon("renommer-salon")
+commandeSujetSalon("sujet-salon")
+```
+
+- **Messages :** envoyer un message dans un salon, modifier un message appartenant au bot, supprimer un message, ajouter une réaction, épingler et désépingler.
+- **Salons :** créer un salon texte ou vocal, supprimer un salon, le renommer et modifier son sujet.
+- Les actions de gestion vérifient les permissions du membre et du bot. Les commandes d'administration sont réservées aux permissions Discord correspondantes.
+- **Encore à développer pour la suite :** lecture de messages via une commande dédiée, pièces jointes, catégories, permissions détaillées et fils de discussion.
+
+Ces commandes sont en cours de validation et ne sont pas encore disponibles dans la version npm publiée.
 
 ## Commandes Discord avancées (v1.2.9)
 
