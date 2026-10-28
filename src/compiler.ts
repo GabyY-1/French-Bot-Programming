@@ -1536,7 +1536,7 @@ export class FbpCompiler {
         const guild = channel.guild as import("discord.js").Guild;
         const options = { name: eventName, description: description || undefined, scheduledStartTime: start, privacyLevel: GuildScheduledEventPrivacyLevel.GuildOnly, entityType: GuildScheduledEventEntityType.Voice, channel: channel.id } as Parameters<typeof guild.scheduledEvents.create>[0];
         return guild.scheduledEvents.create(options) as any;
-      }).then(event => this.output("Événement créé : " + event.name + " (ID " + event.id + ").")).catch(error => this.output("Échec de la création de l’événement : " + (error instanceof Error ? error.message : String(error))));
+      }).then((event: { name: string; id: string }) => this.output("Événement créé : " + event.name + " (ID " + event.id + ").")).catch(error => this.output("Échec de la création de l’événement : " + (error instanceof Error ? error.message : String(error))));
       return;
     }
     if (name === "messagePrive") {
