@@ -420,7 +420,7 @@ export class FbpCompiler {
                   builder.addStringOption(option => option.setName("url").setDescription("URL HTTPS du fichier").setRequired(true));
                   builder.addStringOption(option => option.setName("message").setDescription("Texte facultatif").setRequired(false));
                 }
-                if (action === "read") builder.addIntegerOption(option => option.setName("nombre").setDescription("Nombre de messages (1 à 10)").setMinValue(1).setMaxValue(10).setRequired(true));
+                if (action === "read") builder.addIntegerOption(option => option.setName("nombre").setDescription("Nombre de messages (1 à 100)").setMinValue(1).setMaxValue(100).setRequired(true));
               } else if (action === "send-thread") {
                 builder.addChannelOption(option => option.setName("fil").setDescription("Fil de discussion").setRequired(true));
                 builder.addStringOption(option => option.setName("message").setDescription("Message à envoyer").setRequired(true));
@@ -769,11 +769,30 @@ export class FbpCompiler {
               }
               const count = interaction.options.getInteger("nombre", true);
               const messages = await channel.messages.fetch({ limit: count });
-              const summary = [...messages.values()].reverse().map(message => {
+              const entries = [...messages.values()].reverse().map(message => {
                 const text = message.content || (message.attachments.size ? "[pièce jointe]" : "[message sans texte]");
-                return "[" + message.createdAt.toISOString() + "] " + message.author.username + ": " + text.slice(0, 500);
-              }).join("\\n");
-              await interaction.reply({ content: summary.slice(0, 1900) || "Aucun message trouvé.", ephemeral: true });
+                return "[" + message.createdAt.toISOString() + "] " + message.author.username + ": " + text.slice(0, 350);
+              });
+              const pages: string[] = [];
+              let page = "";
+              for (const entry of entries) {
+                const parts = entry.match(/[\\s\\S]{1,1700}/g) ?? [entry];
+                for (const part of parts) {
+                  const next = page ? page + "\\n" + part : part;
+                  if (next.length > 1900) {
+                    pages.push(page);
+                    page = part;
+                  } else {
+                    page = next;
+                  }
+                }
+              }
+              if (page) pages.push(page);
+              if (!pages.length) pages.push("Aucun message trouvé.");
+              await interaction.reply({ content: pages[0], ephemeral: true });
+              for (const nextPage of pages.slice(1)) {
+                await interaction.followUp({ content: nextPage, ephemeral: true });
+              }
               return;
             }
             if (action === "attach") {
