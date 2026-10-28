@@ -16,7 +16,8 @@
     "themes/",
     "vscode-extension/",
     "language-configuration.json",
-    "package.json"
+    "package.json",
+    "LICENSE"
   ],
   "repository": {
     "type": "git",
@@ -85,5 +86,6 @@
         "path": "./themes/fbp-icon-theme.json"
       }
     ]
-  }
+  },
+  "license": "SEE LICENSE IN LICENSE"
 }
