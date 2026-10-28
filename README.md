@@ -25,7 +25,7 @@ Puis, dans le `package.json` de ton projet :
     "start": "fbp run lancer"
   },
   "dependencies": {
-    "fbp-language": "^1.2.8"
+    "fbp-language": "^1.2.9"
   }
 }
 ```
@@ -152,6 +152,39 @@ optionSalon("configurer", "salon", "Choisis un salon", true)
 ```
 
 Le dernier argument indique si l'option est obligatoire. La réponse affiche le nom du salon précédé de `#`. Cette option peut être ajoutée aux commandes texte ou aux commandes embed, comme les autres options slash.
+
+## Commandes Discord avancées (v1.2.9)
+
+Les commandes texte peuvent recevoir des options utilisateur et rôle, ainsi que des suggestions d'autocomplétion. Les commandes différées répondent d'abord avec un accusé de réception Discord, puis modifient cette réponse.
+
+```fbp
+connexion()
+commande("profil", "Membre sélectionné : {{membre}}")
+optionUtilisateur("profil", "membre", "Choisis un membre", true)
+
+commande("choisir", "Tu as choisi : {{modele}}")
+optionAutocompleteTexte("choisir", "modele", "Recherche un modèle", true)
+suggestionAutocomplete("choisir", "modele", "Modèle A", "modele-a")
+suggestionAutocomplete("choisir", "modele", "Modèle B", "modele-b")
+
+commandeDifferee("traitement", "Traitement terminé.")
+```
+
+Les suggestions d'autocomplétion sont définies avec `suggestionAutocomplete` et filtrées pendant la saisie. Les réponses différées utilisent `deferReply` puis `editReply`.
+
+Les sous-commandes et groupes peuvent être déclarés ainsi :
+
+```fbp
+connexion()
+commande("outils", "Commandes outils")
+sousCommande("outils", "ping", "Vérifier le bot", "Pong !")
+
+commande("config", "Commandes de configuration")
+groupeSousCommandes("config", "salons", "Gestion des salons")
+sousCommandeGroupe("config", "salons", "aide", "Afficher l'aide", "Utilise les commandes de configuration.")
+```
+
+Les options utilisateur et rôle sont également disponibles avec `optionUtilisateur` et `optionRole`. Pour un rôle, la réponse contient une mention Discord.
 
 ## Nouveautés de FBP 1.2.4
 
