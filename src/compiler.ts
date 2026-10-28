@@ -1553,8 +1553,30 @@ export class FbpCompiler {
       });
       return;
     }
-    if (name === "vocalRejoindre" || name === "vocalQuitter") {
-      throw new FbpError("La connexion vocale n'est pas encore disponible : @discordjs/voice doit être intégré à la dépendance du projet.", undefined, line);
+    if (name === "vocalRejoindre") {
+      if (!this.discordClient) throw new FbpError("Appelle connexion() avant vocalRejoindre().", undefined, line);
+      if (values.length !== 1 || typeof values[0] !== "string" || !/^\\d{17,20}$/.test(values[0])) throw new FbpError('Utilisation : vocalRejoindre("ID_SALON_VOCAL").', undefined, line);
+      const channelId = values[0];
+      void this.discordClient.channels.fetch(channelId).then(async channel => {
+        if (!channel || !channel.isVoiceBased() || !("guild" in channel) || !channel.guild) throw new Error("Le salon indiqué n'est pas un salon vocal valide.");
+        const voice = await import("@discordjs/voice");
+        voice.joinVoiceChannel({ channelId: channel.id, guildId: channel.guild.id, adapterCreator: channel.guild.voiceAdapterCreator, selfDeaf: true });
+        this.output("Connexion au salon vocal : " + ("name" in channel ? channel.name : channel.id));
+      }).catch(error => this.output("Échec de la connexion vocale : " + (error instanceof Error ? error.message : String(error))));
+      return;
+    }
+    if (name === "vocalQuitter") {
+      if (!this.discordClient) throw new FbpError("Appelle connexion() avant vocalQuitter().", undefined, line);
+      if (values.length > 1 || values.length === 1 && typeof values[0] !== "string") throw new FbpError('Utilisation : vocalQuitter("ID_SERVEUR").', undefined, line);
+      const guildId = values[0] as string | undefined;
+      if (guildId && !/^\\d{17,20}$/.test(guildId)) throw new FbpError("Identifiant de serveur invalide.", undefined, line);
+      void import("@discordjs/voice").then(({ getVoiceConnection }) => {
+        const connection = guildId ? getVoiceConnection(guildId) : [...this.discordClient!.guilds.cache.keys()].map(id => getVoiceConnection(id)).find(Boolean);
+        if (!connection) throw new Error("Le bot n'est connecté à aucun salon vocal correspondant.");
+        connection.destroy();
+        this.output("Connexion vocale fermée.");
+      }).catch(error => this.output("Échec de la déconnexion vocale : " + (error instanceof Error ? error.message : String(error))));
+      return;
     }
     if (name === "ping") {
       this.output("FBP fonctionne. Cette commande ne vérifie pas à elle seule une connexion Discord.");
