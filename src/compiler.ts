@@ -623,6 +623,49 @@ export class FbpCompiler {
               await interaction.reply({ content: "Le bot ne possède pas la permission nécessaire.", ephemeral: true });
               return;
             }
+            if (action === "create-category") {
+              const name = interaction.options.getString("nom", true).trim();
+              if (!name || name.length > 100) {
+                await interaction.reply({ content: "Le nom de la catégorie doit contenir de 1 à 100 caractères.", ephemeral: true });
+                return;
+              }
+              const category = await guild.channels.create({ name, type: 4, reason: "Création via FBP" });
+              await interaction.reply({ content: "Catégorie créée : " + category.toString(), ephemeral: true });
+              return;
+            }
+            if (action === "send-thread") {
+              const thread = interaction.options.getChannel("fil", true);
+              const content = interaction.options.getString("message", true);
+              if (!("isThread" in thread) || typeof thread.isThread !== "function" || !thread.isThread() || !("send" in thread) || typeof thread.send !== "function") {
+                await interaction.reply({ content: "Le salon sélectionné n'est pas un fil de discussion.", ephemeral: true });
+                return;
+              }
+              if (content.length > 2000) {
+                await interaction.reply({ content: "Un message Discord ne peut pas dépasser 2 000 caractères.", ephemeral: true });
+                return;
+              }
+              await thread.send({ content });
+              await interaction.reply({ content: "Message envoyé dans le fil.", ephemeral: true });
+              return;
+            }
+            if (action === "create-thread") {
+              const channelForThread = interaction.options.getChannel("salon", true);
+              const id = interaction.options.getString("message_id", true).trim();
+              const threadName = interaction.options.getString("nom", true).trim();
+              if (!/^\d{17,20}$/.test(id) || !threadName || threadName.length > 100 ||
+                  !("messages" in channelForThread) || !channelForThread.messages || typeof channelForThread.messages.fetch !== "function") {
+                await interaction.reply({ content: "Salon, identifiant du message ou nom du fil invalide.", ephemeral: true });
+                return;
+              }
+              const starter = await channelForThread.messages.fetch(id).catch(() => null);
+              if (!starter || !("startThread" in starter) || typeof starter.startThread !== "function") {
+                await interaction.reply({ content: "Impossible de créer un fil à partir de ce message.", ephemeral: true });
+                return;
+              }
+              const thread = await starter.startThread({ name: threadName, reason: "Création via FBP" });
+              await interaction.reply({ content: "Fil créé : " + thread.toString(), ephemeral: true });
+              return;
+            }
             if (action === "create-channel") {
               const name = interaction.options.getString("nom", true).trim();
               const type = interaction.options.getString("type", true);
