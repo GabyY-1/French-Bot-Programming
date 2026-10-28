@@ -308,12 +308,13 @@ export class FbpCompiler {
               return;
             }
             const targetUser = interaction.options.getUser("membre", true);
-            const role = interaction.options.getRole("role", true);
+            const selectedRole = interaction.options.getRole("role", true);
             const guild = interaction.guild;
             const targetMember = await guild.members.fetch(targetUser.id).catch(() => null);
+            const role = await guild.roles.fetch(selectedRole.id).catch(() => null);
             const botMember = guild.members.me;
-            if (!targetMember || !botMember) {
-              await interaction.reply({ content: "Impossible de récupérer le membre ou le bot sur ce serveur.", ephemeral: true });
+            if (!targetMember || !role || !botMember) {
+              await interaction.reply({ content: "Impossible de récupérer le membre, le rôle ou le bot sur ce serveur.", ephemeral: true });
               return;
             }
             const actor = await guild.members.fetch(interaction.user.id).catch(() => null);
