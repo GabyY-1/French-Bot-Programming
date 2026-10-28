@@ -25,8 +25,6 @@ La branche de développement prépare FBP 1.3.0. Les fonctionnalités de message
 
 ## Installation depuis npm
 
-## Prérequis
-
 - Node.js 20 ou plus récent
 - npm
 
