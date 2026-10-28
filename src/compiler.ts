@@ -316,7 +316,11 @@ export class FbpCompiler {
               await interaction.reply({ content: "Impossible de récupérer le membre ou le bot sur ce serveur.", ephemeral: true });
               return;
             }
-            const actor = interaction.member as import("discord.js").GuildMember;
+            const actor = await guild.members.fetch(interaction.user.id).catch(() => null);
+            if (!actor || !botMember.permissions.has(PermissionFlagsBits.ManageRoles)) {
+              await interaction.reply({ content: "Le bot doit avoir la permission Gérer les rôles.", ephemeral: true });
+              return;
+            }
             if (role.id === guild.id || role.managed ||
                 role.position >= botMember.roles.highest.position ||
                 (interaction.user.id !== guild.ownerId && role.position >= actor.roles.highest.position)) {
