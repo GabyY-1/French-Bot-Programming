@@ -1,0 +1,2 @@
+affiche("Les commandes FBP fonctionnent.")
+affiche("Cette commande ne vérifie pas à elle seule la connexion Discord.")
