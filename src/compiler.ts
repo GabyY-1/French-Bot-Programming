@@ -250,7 +250,7 @@ export class FbpCompiler {
                 texte: () => builder.addStringOption(item => {
                   item.setName(option.name).setDescription(option.description).setRequired(option.required);
                   if (option.autocomplete) item.setAutocomplete(true);
-                  for (const choice of option.choices ?? []) if (typeof choice.value === "string") item.addChoices({ name: choice.name, value: choice.value });
+                  if (!option.autocomplete) for (const choice of option.choices ?? []) if (typeof choice.value === "string") item.addChoices({ name: choice.name, value: choice.value });
                   return item;
                 }),
                 nombre: () => builder.addNumberOption(item => {
@@ -258,7 +258,7 @@ export class FbpCompiler {
                   if (option.autocomplete) item.setAutocomplete(true);
                   if (option.minValue !== undefined) item.setMinValue(option.minValue);
                   if (option.maxValue !== undefined) item.setMaxValue(option.maxValue);
-                  for (const choice of option.choices ?? []) if (typeof choice.value === "number") item.addChoices({ name: choice.name, value: choice.value });
+                  if (!option.autocomplete) for (const choice of option.choices ?? []) if (typeof choice.value === "number") item.addChoices({ name: choice.name, value: choice.value });
                   return item;
                 }),
                 entier: () => builder.addIntegerOption(item => {
@@ -461,6 +461,16 @@ export class FbpCompiler {
       });
       return;
     }
+    if (name === "commandeDifferee" || name === "commandeModifiable") {
+      if (!this.discordClient) throw new FbpError("Appelle connexion() avant de déclarer une commande.", undefined, line);
+      if (values.length !== 2 || values.some(value => typeof value !== "string")) {
+        throw new FbpError('Utilisation : commandeDifferee("nom", "réponse") ou commandeModifiable("nom", "réponse").', undefined, line);
+      }
+      const [commandName, response] = values as string[];
+      if (!/^[a-z0-9_-]{1,32}$/.test(commandName)) throw new FbpError("Le nom d'une commande slash doit contenir 1 à 32 caractères : lettres minuscules, chiffres, tirets ou underscores.", undefined, line);
+      this.discordCommands.set(commandName, { type: "text", content: response, deferred: true, options: [] });
+      return;
+    }
     if (name === "commandePrivee") {
       if (!this.discordClient) throw new FbpError("Appelle connexion() avant de déclarer une commande.", undefined, line);
       if (values.length !== 2 || typeof values[0] !== "string" || typeof values[1] !== "string") {
@@ -517,6 +527,20 @@ export class FbpCompiler {
       choices.push({ name: choiceName, value: choiceValue as string | number });
       return;
     }
+    if (name === "suggestionAutocomplete") {
+      if (values.length !== 4 || values.some(value => typeof value !== "string")) {
+        throw new FbpError('Utilisation : suggestionAutocomplete("commande", "option", "libellé", "valeur").', undefined, line);
+      }
+      const [commandName, optionName, label, value] = values as string[];
+      const command = this.discordCommands.get(commandName);
+      const option = command?.options?.find(item => item.name === optionName);
+      if (!option || !option.autocomplete) throw new FbpError("L'option d'autocomplétion n'existe pas ou n'est pas déclarée avec optionAutocompleteTexte.", undefined, line);
+      if (!label.trim() || label.length > 100 || value.length > 100) throw new FbpError("Le libellé doit contenir 1 à 100 caractères et la valeur au maximum 100.", undefined, line);
+      if (option.choices?.some(choice => choice.name === label || choice.value === value)) throw new FbpError("Cette suggestion existe déjà.", undefined, line);
+      if ((option.choices?.length ?? 0) >= 25) throw new FbpError("Une option ne peut pas contenir plus de 25 suggestions.", undefined, line);
+      (option.choices ??= []).push({ name: label, value });
+      return;
+    }
     if (name === "optionNombreLimites" || name === "optionEntierLimites") {
       if (values.length !== 4 || typeof values[0] !== "string" || typeof values[1] !== "string" || typeof values[2] !== "number" || typeof values[3] !== "number") {
         throw new FbpError("Utilisation : optionNombreLimites(commande, option, minimum, maximum) ou optionEntierLimites(...).", undefined, line);
@@ -535,7 +559,7 @@ export class FbpCompiler {
       option.maxValue = maximum;
       return;
     }
-    if (name === "optionTexte" || name === "optionNombre" || name === "optionEntier" || name === "optionBooleen" || name === "optionSalon" || name === "optionUtilisateur" || name === "optionRole") {
+    if (name === "optionTexte" || name === "optionNombre" || name === "optionEntier" || name === "optionBooleen" || name === "optionSalon" || name === "optionUtilisateur" || name === "optionRole" || name === "optionAutocompleteTexte") {
       if (values.length < 3 || values.length > 4 || values.some(value => typeof value !== "string" && typeof value !== "boolean")) {
         throw new FbpError("Utilisation : optionTexte/Nombre/Entier/Booleen/Salon(nomCommande, nomOption, description, obligatoire).", undefined, line);
       }
@@ -551,8 +575,8 @@ export class FbpCompiler {
       const options = command.options ?? (command.options = []);
       if (options.some(option => option.name === optionName) || (command.type === "embed" && command.userOption?.name === optionName)) throw new FbpError("L'option « " + optionName + " » existe déjà pour cette commande.", undefined, line);
       if (options.length + (command.type === "embed" && command.userOption ? 1 : 0) >= 25) throw new FbpError("Une commande slash Discord ne peut pas contenir plus de 25 options.", undefined, line);
-      const type: DiscordOptionType = name === "optionTexte" ? "texte" : name === "optionNombre" ? "nombre" : name === "optionEntier" ? "entier" : name === "optionBooleen" ? "booleen" : name === "optionSalon" ? "salon" : name === "optionUtilisateur" ? "utilisateur" : "role";
-      options.push({ name: optionName, description, type, required });
+      const type: DiscordOptionType = name === "optionTexte" || name === "optionAutocompleteTexte" ? "texte" : name === "optionNombre" ? "nombre" : name === "optionEntier" ? "entier" : name === "optionBooleen" ? "booleen" : name === "optionSalon" ? "salon" : name === "optionUtilisateur" ? "utilisateur" : "role";
+      options.push({ name: optionName, description, type, required, autocomplete: name === "optionAutocompleteTexte" });
       return;
     }
     if (name === "optionUtilisateur") {
