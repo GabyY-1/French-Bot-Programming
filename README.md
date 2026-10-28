@@ -284,4 +284,4 @@ Le dossier `vscode-extension/` contient le manifeste d’extension, la grammaire
 
 ## Licence
 
-FBP est distribué sous la **Mist Max Proprietary License (MMPL) v1.0**. L'utilisation commerciale et la redistribution du logiciel original sont autorisées sous conditions. La modification est permise pour un usage personnel ou interne, mais la redistribution de versions modifiées nécessite une autorisation écrite préalable. Consulte le fichier [LICENSE](./LICENSE) pour le texte complet.
+FBP est distribué sous la licence **Apache License 2.0**. Elle autorise l'utilisation, la modification et la redistribution, y compris à des fins commerciales, sous réserve de ses conditions. Consulte le fichier [LICENSE](./LICENSE) pour le texte complet et le fichier [NOTICE](./NOTICE), s'il est présent, pour les mentions applicables.
