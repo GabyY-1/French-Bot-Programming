@@ -1,0 +1,8 @@
+nom = "FBP"
+
+lance() {
+  affiche("Le programme FBP démarre.")
+  affiche("Projet :", nom)
+}
+
+lance()
