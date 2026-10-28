@@ -285,3 +285,28 @@ Le dossier `vscode-extension/` contient le manifeste d’extension, la grammaire
 ## Licence
 
 FBP est distribué sous la licence **Apache License 2.0**. Elle autorise l'utilisation, la modification et la redistribution, y compris à des fins commerciales, sous réserve de ses conditions. Consulte le fichier [LICENSE](./LICENSE) pour le texte complet et le fichier [NOTICE](./NOTICE), s'il est présent, pour les mentions applicables.
+
+## Administration et gestion des rôles (v1.2.8)
+
+FBP permet de déclarer des commandes réservées aux administrateurs et des commandes dédiées à la gestion des rôles. Elles doivent être déclarées après `connexion()`.
+
+### Commandes réservées aux administrateurs
+
+```fbp
+connexion()
+commandeAdmin("annonce-admin", "Commande réservée aux administrateurs.")
+```
+
+La commande slash `/annonce-admin` n'est accessible qu'aux membres ayant la permission Administrateur. La permission est également vérifiée à l'exécution.
+
+### Ajouter ou retirer un rôle
+
+```fbp
+connexion()
+commandeAjouterRole("ajouter-role")
+commandeRetirerRole("retirer-role")
+```
+
+Ces déclarations créent les commandes slash `/ajouter-role` et `/retirer-role`, chacune avec un sélecteur de membre et de rôle. Elles nécessitent la permission **Gérer les rôles**. Le bot vérifie également la hiérarchie des rôles et refuse les rôles gérés par une intégration ou placés trop haut. Dans le portail Discord, donne au bot la permission **Gérer les rôles** et place son rôle au-dessus des rôles qu'il doit gérer.
+
+Les réponses sont privées à l'utilisateur qui lance la commande. Discord reste l'autorité finale : le bot ne peut pas dépasser les permissions de son serveur ni sa propre position dans la hiérarchie.
