@@ -21,6 +21,10 @@ export function formatDiscordError(error: unknown): string {
       : "Discord limite temporairement les requêtes. Réessaie dans quelques instants.";
   }
 
+  if (code === "4014" || /disallowed intent/i.test(message)) {
+    return "Discord a refusé une intention Gateway. Vérifie les intents activés dans le portail développeur, notamment les intents privilégiés."; 
+  }
+
   if (code === "50001" || code === "MISSING_ACCESS") {
     return "Le bot n'a pas accès à cette ressource. Vérifie qu'il est toujours sur le serveur et qu'il peut voir le salon.";
   }
