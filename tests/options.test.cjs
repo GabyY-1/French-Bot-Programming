@@ -131,3 +131,29 @@ test("les noms invalides de commandes de salon sont refusés", () => {
     /nom de la commande slash est invalide/
   );
 });
+
+
+test("les événements Discord de la version 1.3.2 sont déclarables", () => {
+  assert.doesNotThrow(() => runSource([
+    "connexion()",
+    'evenementMessage("recu", "{{pseudo}} : {{message}}")',
+    'evenementReaction("ajout", "{{pseudo}} a réagi avec {{reaction}}")',
+    'evenementReaction("retrait", "{{pseudo}} a retiré {{reaction}}")',
+    'evenementInteraction("bouton", "{{pseudo}} a cliqué sur {{custom_id}}")',
+    'evenementInteraction("menu", "{{pseudo}} a choisi {{valeurs}}")',
+    'evenementInteraction("formulaire", "{{pseudo}} : {{formulaire}}")',
+    'evenementVocal("arrivee", "{{pseudo}} rejoint {{nouveau}}")',
+    'evenementVocal("depart", "{{pseudo}} quitte {{ancien}}")',
+    'evenementVocal("changement", "{{pseudo}} : {{ancien}} vers {{nouveau}}")',
+    'evenementServeur("salon_cree", "Salon créé : {{nom}}")',
+    'evenementServeur("bannissement", "{{pseudo}} banni")',
+    'evenementServeur("moderation", "{{evenement}} par {{pseudo}}")'
+  ].join("\\n")));
+});
+
+test("un type d'événement Discord inconnu est refusé", () => {
+  assert.throws(
+    () => runSource(['connexion()', 'evenementMessage("inconnu", "test")'].join("\\n")),
+    /Type d'événement inconnu/
+  );
+});
