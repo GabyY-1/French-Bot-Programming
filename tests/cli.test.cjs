@@ -90,3 +90,63 @@ test("la version du CLI correspond au package local", () => {
   assert.equal(result.status, 0);
   assert.match(result.stdout, new RegExp(`FBP ${packageVersion.replace(/\./g, "\\.")}`));
 });
+
+
+test("les commandes list et check inspectent la configuration du projet", () => {
+  const listed = run(["list"], fixtures);
+  assert.equal(listed.status, 0);
+  assert.match(listed.stdout, /test/);
+  assert.match(listed.stdout, /scripts\/test\.fbp/);
+
+  const checked = run(["check"], fixtures);
+  assert.equal(checked.status, 0);
+  assert.match(checked.stdout, /Vérification réussie/);
+});
+
+test("check échoue quand une cible déclarée n'existe pas", () => {
+  const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "fbp-check-missing-"));
+  try {
+    fs.writeFileSync(path.join(cwd, "commandes.fbp"), JSON.stringify({ manquante: "scripts/introuvable.fbp" }));
+    const result = run(["check"], cwd);
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /cible\(s\) introuvable\(s\)/);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test("example affiche un exemple et --create le sauvegarde sans écraser", () => {
+  const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "fbp-example-"));
+  try {
+    const shown = run(["example"], cwd);
+    assert.equal(shown.status, 0);
+    assert.match(shown.stdout, /lance\(\)/);
+    const created = run(["example", "--create"], cwd);
+    assert.equal(created.status, 0);
+    const examplePath = path.join(cwd, "exemple.fbp");
+    assert.ok(fs.existsSync(examplePath));
+    const original = fs.readFileSync(examplePath, "utf8");
+    assert.match(original, /FBP fonctionne !/);
+    const second = run(["example", "--create"], cwd);
+    assert.equal(second.status, 1);
+    assert.equal(fs.readFileSync(examplePath, "utf8"), original);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test("doctor, where et les alias sont disponibles", () => {
+  const doctor = run(["doctor"], fixtures);
+  assert.equal(doctor.status, 0);
+  assert.match(doctor.stdout, /Diagnostic FBP/);
+
+  const where = run(["where"]);
+  assert.equal(where.status, 0);
+  assert.match(where.stdout, /Dossier courant/);
+  assert.match(where.stdout, /Configuration projet/);
+
+  const alias = run(["commands"], fixtures);
+  assert.equal(alias.status, 0);
+  assert.match(alias.stdout, /test/);
+  assert.equal(run(["validate"], fixtures).status, 0);
+});
