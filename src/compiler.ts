@@ -160,6 +160,7 @@ export class FbpCompiler {
   private discordContextCommands = new Map<string, "utilisateur" | "message">();
   private discordMemberEvents = new Map<string, string>();
   private discordEvents = new Map<string, string>();
+  private discordGuildConfigurations = new Map<string, Map<string, string>>();
   private useGuildMembersIntent = false;
   private useGuildPresencesIntent = false;
   private useMessageContentIntent = false;
@@ -171,6 +172,12 @@ export class FbpCompiler {
   constructor(options: RunOptions = {}) {
     this.output = options.onOutput ?? (value => console.log(value));
     this.connectDiscord = options.connectDiscord ?? true;
+  }
+
+  private renderGuildTemplate(template: string, guildId: string | null, values: Record<string, string> = {}): string {
+    const configuration = guildId ? this.discordGuildConfigurations.get(guildId) : undefined;
+    const configured = template.replace(/\{\{config:([a-z0-9_-]{1,32})\}\}/g, (match, key: string) => configuration?.get(key) ?? match);
+    return configured.replace(/\{\{([a-z0-9_-]{1,32})\}\}/g, (match, key: string) => values[key] ?? match);
   }
 
   private resolveDiscordValue(
@@ -300,6 +307,22 @@ export class FbpCompiler {
     const values = args.map(arg => this.evaluate(arg, line));
     if (name === "affiche") {
       this.output(values.map(value => value === undefined ? "" : String(value)).join(" "));
+      return;
+    }
+    if (name === "configurationServeur") {
+      if (values.length !== 3 || values.some(value => typeof value !== "string")) {
+        throw new FbpError('Utilisation : configurationServeur("ID_SERVEUR", "clé", "valeur").', undefined, line);
+      }
+      const [guildId, key, value] = values as string[];
+      if (!/^\d{17,20}$/.test(guildId) || !/^[a-z0-9_-]{1,32}$/.test(key) || value.length > 1000) {
+        throw new FbpError("Configuration invalide : vérifie l'identifiant du serveur, la clé (1 à 32 caractères minuscules) et la valeur (1000 caractères maximum).", undefined, line);
+      }
+      let configuration = this.discordGuildConfigurations.get(guildId);
+      if (!configuration) {
+        configuration = new Map<string, string>();
+        this.discordGuildConfigurations.set(guildId, configuration);
+      }
+      configuration.set(key, value);
       return;
     }
     if (name === "connexion") {
@@ -1117,7 +1140,7 @@ export class FbpCompiler {
             else if (response.roleAction === "remove") await targetMember.roles.remove(role, "Commande FBP de gestion des rôles");
             const content = response.roleAction === "check"
               ? (targetMember.roles.cache.has(role.id) ? targetMember.user.username + " possède le rôle " + role.name + "." : targetMember.user.username + " ne possède pas le rôle " + role.name + ".")
-              : response.content.replace(/\{\{membre\}\}/g, targetMember.user.username).replace(/\{\{role\}\}/g, role.name);
+              : this.renderGuildTemplate(response.content, guild.id, { membre: targetMember.user.username, role: role.name });
             await interaction.reply({ content, ephemeral: response.ephemeral ?? false });
             return;
           }
@@ -1151,9 +1174,7 @@ export class FbpCompiler {
             if (value !== null) optionValues.set(option.name, value);
           }
           if (response.type === "text") {
-            const content = response.content.replace(/\{\{([a-z0-9_-]{1,32})\}\}/g, (match, name: string) =>
-              optionValues.has(name) ? optionValues.get(name)! : match
-            );
+            const content = this.renderGuildTemplate(response.content, interaction.guildId, Object.fromEntries(optionValues));
             if (response.deferred) {
               await interaction.deferReply({ ephemeral: response.ephemeral ?? false });
               await interaction.editReply({ content });
@@ -1171,7 +1192,7 @@ export class FbpCompiler {
             if (response.userOption && selectedUser) optionValues.set(response.userOption.name, selectedMember?.displayName ?? selectedUser.username);
             const fields = response.fields.map(field => ({
               name: field.name,
-              value: field.dynamic ? this.resolveDiscordValue(field.value, interaction, selectedUser, selectedMember, optionValues) : field.value.replace(/\{\{([a-z0-9_-]{1,32})\}\}/g, (match, name: string) => optionValues.get(name) ?? match),
+              value: this.renderGuildTemplate(field.dynamic ? this.resolveDiscordValue(field.value, interaction, selectedUser, selectedMember, optionValues) : field.value, interaction.guildId, Object.fromEntries(optionValues)),
               inline: false
             }));
             if (fields.length) embed.addFields(fields);
