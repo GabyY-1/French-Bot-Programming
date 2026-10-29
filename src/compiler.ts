@@ -460,6 +460,7 @@ export class FbpCompiler {
             membre: user.username ?? "inconnu",
             id: user.id,
             serveur: guild.name,
+            serveur_id: guild.id,
             salon: ("name" in resolvedReaction.message.channel ? resolvedReaction.message.channel.name : resolvedReaction.message.channelId) ?? "inconnu",
             reaction: resolvedReaction.emoji.toString(),
             message_id: resolvedReaction.message.id
