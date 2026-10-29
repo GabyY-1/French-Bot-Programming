@@ -123,13 +123,28 @@ fbp run lancer
 
 ## Installation depuis npm
 
-Quand la version sera publiée sur npm :
+Pour installer FBP dans un projet et utiliser la commande dans ses scripts :
 
 ```bash
 npm install fbp-language
 ```
 
-Puis, dans le `package.json` de ton projet :
+Pour rendre la commande `fbp` disponible directement dans le terminal, installe FBP globalement :
+
+```bash
+npm install -g fbp-language
+fbp version
+```
+
+Chaque Codespace possède son propre environnement : une installation globale dans un Codespace n'installe pas FBP dans les autres.
+
+Si tu préfères ne pas installer FBP globalement, tu peux lancer ses commandes avec :
+
+```bash
+npx fbp-language version
+```
+
+Puis, dans le `package.json` de ton projet, tu peux définir un script :
 
 ```json
 {
@@ -142,7 +157,7 @@ Puis, dans le `package.json` de ton projet :
 }
 ```
 
-Lance le script avec `npm start`. npm rend la commande `fbp` disponible dans les scripts du projet.
+Lance le script avec `npm start`. npm rend alors la commande locale `fbp` disponible dans les scripts du projet.
 
 ## Créer un projet FBP
 
