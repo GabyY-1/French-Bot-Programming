@@ -220,7 +220,7 @@ export class FbpCompiler {
           : rawName;
         if (["arrivee", "depart", "pseudo", "roles", "statut"].includes(eventName)) this.useGuildMembersIntent = true;
         if (eventName === "statut") this.useGuildPresencesIntent = true;
-      } else if (statement.kind === "call" && statement.name === "evenementMessage") {
+      } else if (statement.kind === "call" && ["evenementMessage", "commandeLireMessages", "commandeContextuelleMessage"].includes(statement.name)) {
         this.useMessageContentIntent = true;
       } else if (statement.kind === "call" && statement.name === "evenementReaction") {
         this.useMessageReactionsIntent = true;
@@ -257,6 +257,7 @@ export class FbpCompiler {
     this.useVoiceStatesIntent = false;
     this.useGuildModerationIntent = false;
     this.useDirectMessagesIntent = false;
+    this.discordGuildConfigurations.clear();
     this.collectMemberIntents(statements, path.dirname(absolute), new Set([absolute]));
     this.execute(statements, path.dirname(absolute));
   }
