@@ -355,16 +355,14 @@ export class FbpCompiler {
       client.on("shardError", error => this.output("Erreur de passerelle Discord : " + formatDiscordError(error)));
 
       const renderMemberEvent = (template: string, member: import("discord.js").GuildMember | import("discord.js").PartialGuildMember, extra: Record<string, string> = {}) =>
-        template.replace(/\{\{([a-z0-9_-]{1,32})\}\}/g, (match, key: string) => {
-          const values: Record<string, string> = {
-            membre: member.user.username,
-            pseudo: member.displayName,
-            id: member.id,
-            serveur: member.guild.name,
-            roles: member.roles.cache.filter(role => role.id !== member.guild.id).map(role => role.name).join(", ") || "Aucun rôle",
-            ...extra
-          };
-          return values[key] ?? match;
+        this.renderGuildTemplate(template, member.guild.id, {
+          membre: member.user.username,
+          pseudo: member.displayName,
+          id: member.id,
+          serveur: member.guild.name,
+          serveur_id: member.guild.id,
+          roles: member.roles.cache.filter(role => role.id !== member.guild.id).map(role => role.name).join(", ") || "Aucun rôle",
+          ...extra
         });
 
       client.on("guildMemberAdd", member => {
@@ -415,7 +413,7 @@ export class FbpCompiler {
       const renderDiscordEvent = (key: string, values: Record<string, string>) => {
         const template = this.discordEvents.get(key);
         if (!template) return;
-        this.output(template.replace(/\{\{([a-z0-9_-]{1,32})\}\}/g, (match, name: string) => values[name] ?? match));
+        this.output(this.renderGuildTemplate(template, values.serveur_id || null, values));
       };
 
       client.on("messageCreate", message => {
@@ -425,6 +423,7 @@ export class FbpCompiler {
             membre: message.author.username,
             id: message.author.id,
             serveur: message.guild.name,
+            serveur_id: message.guild.id,
             salon: " #" + ((message.channel.isTextBased() && "name" in message.channel ? message.channel.name : message.channelId) ?? "inconnu"),
             message: message.content || "[message sans texte]",
             message_id: message.id,
@@ -443,6 +442,7 @@ export class FbpCompiler {
             membre: user.username ?? "inconnu",
             id: user.id,
             serveur: guild.name,
+            serveur_id: guild.id,
             salon: ("name" in resolvedReaction.message.channel ? resolvedReaction.message.channel.name : resolvedReaction.message.channelId) ?? "inconnu",
             reaction: resolvedReaction.emoji.toString(),
             message_id: resolvedReaction.message.id
@@ -479,6 +479,7 @@ export class FbpCompiler {
             membre: user.username ?? "inconnu",
             id: user.id,
             serveur: interaction.guild?.name ?? "Message privé",
+            serveur_id: interaction.guildId ?? "",
             salon: (interaction.channel && "name" in interaction.channel ? interaction.channel.name : interaction.channelId) ?? "inconnu",
             custom_id: "customId" in interaction ? interaction.customId : "inconnu",
             valeurs: interaction.isAnySelectMenu() ? interaction.values.join(", ") : "",
@@ -504,6 +505,7 @@ export class FbpCompiler {
             membre: member.user.username,
             id: member.id,
             serveur: after.guild.name,
+            serveur_id: after.guild.id,
             ancien: before.channel?.name ?? "Aucun salon vocal",
             nouveau: after.channel?.name ?? "Aucun salon vocal",
             salon: after.channel?.name ?? before.channel?.name ?? "Aucun salon vocal"
@@ -531,6 +533,7 @@ export class FbpCompiler {
             nom: target.name ?? first.name ?? "inconnu",
             id: target.id ?? first.id ?? "inconnu",
             serveur: target.guild?.name ?? first.guild?.name ?? "Serveur",
+            serveur_id: (target.guild as { id?: string } | undefined)?.id ?? (first.guild as { id?: string } | undefined)?.id ?? "",
             pseudo: target.user?.username ?? first.user?.username ?? "inconnu",
             membre: target.user?.username ?? first.user?.username ?? "inconnu",
             raison: target.reason ?? first.reason ?? "Aucun motif"
@@ -543,6 +546,7 @@ export class FbpCompiler {
             evenement: entry.action.toString(),
             id: entry.id,
             serveur: guild.name,
+            serveur_id: guild.id,
             pseudo: entry.executor?.username ?? "inconnu",
             membre: entry.target?.toString() ?? "inconnu",
             raison: entry.reason ?? "Aucun motif"
@@ -1184,8 +1188,8 @@ export class FbpCompiler {
             }
           } else {
             const embed = new EmbedBuilder()
-              .setTitle(response.title)
-              .setDescription(response.description)
+              .setTitle(this.renderGuildTemplate(response.title, interaction.guildId, Object.fromEntries(optionValues)))
+              .setDescription(this.renderGuildTemplate(response.description, interaction.guildId, Object.fromEntries(optionValues)))
               .setColor(Number.parseInt(response.color.slice(1), 16));
             const guild = interaction.guild;
             const selectedUser = response.userOption ? interaction.options.getUser(response.userOption.name) : null;
