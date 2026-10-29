@@ -838,7 +838,9 @@ export class FbpCompiler {
             const guild = interaction.guild;
             const selectedChannel = action === "send-thread" || action === "close-thread"
               ? interaction.options.getChannel("fil", true)
-              : interaction.options.getChannel("salon", !["send"].includes(action));
+              : ["create-category", "delete-category", "create-channel"].includes(action)
+                ? null
+                : interaction.options.getChannel("salon", !["send"].includes(action));
             const permissionTarget = selectedChannel && "isThread" in selectedChannel &&
               typeof selectedChannel.isThread === "function" && selectedChannel.isThread() && "parent" in selectedChannel
               ? selectedChannel.parent ?? selectedChannel
