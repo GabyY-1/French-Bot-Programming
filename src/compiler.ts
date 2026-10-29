@@ -852,20 +852,20 @@ export class FbpCompiler {
             const requiredPermissions = action === "read"
               ? [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.ReadMessageHistory]
               : action === "attach"
-                ? [PermissionFlagsBits.SendMessages, PermissionFlagsBits.AttachFiles]
+                ? [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.AttachFiles]
                 : action === "react"
-                  ? [PermissionFlagsBits.AddReactions]
+                  ? [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.AddReactions]
                   : action === "create-thread"
                     ? [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.CreatePublicThreads]
                     : action === "send-thread"
                       ? [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessagesInThreads]
                       : action === "close-thread"
-                        ? [PermissionFlagsBits.ManageThreads]
+                        ? [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.ManageThreads]
                         : ["create-channel", "delete-channel", "rename-channel", "topic-channel", "create-category", "move-category", "delete-category", "channel-permission"].includes(action)
                           ? [PermissionFlagsBits.ManageChannels]
                           : ["pin", "unpin", "delete", "edit"].includes(action)
-                            ? [PermissionFlagsBits.ManageMessages]
-                            : [PermissionFlagsBits.SendMessages];
+                            ? [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.ManageMessages]
+                            : [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages];
             const actorPermissions = actor && permissionTarget && "permissionsFor" in permissionTarget &&
               typeof permissionTarget.permissionsFor === "function"
               ? permissionTarget.permissionsFor(actor)
