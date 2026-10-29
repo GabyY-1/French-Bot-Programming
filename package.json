@@ -2,13 +2,14 @@
   "name": "fbp-language",
   "displayName": "FBP - French Bot Programming",
   "description": "Langage FBP avec compilateur, commandes Discord et support VS Code.",
-  "version": "1.3.4",
+  "version": "1.3.5",
   "type": "commonjs",
   "main": "dist/compiler.js",
   "bin": {
     "fbp": "dist/cli.js"
   },
   "files": [
+    "scripts/",
     "dist/",
     "README.md",
     "syntaxes/",
@@ -45,7 +46,8 @@
     "prepublishOnly": "npm test",
     "start": "node dist/cli.js",
     "dev": "ts-node src/cli.ts",
-    "test": "npm run build && node --test tests/*.test.cjs"
+    "test": "npm run build && node --test tests/*.test.cjs",
+    "testStable": "node scripts/test-stable.cjs"
   },
   "engines": {
     "node": ">=20"
