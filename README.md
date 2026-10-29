@@ -18,7 +18,21 @@ La version actuelle est FBP 1.3.4. La version 1.3.1 ajoute les commandes de gest
 - Les intents nécessaires sont calculés à partir des événements déclarés. Si Discord refuse un intent privilégié, le message d'erreur indique où vérifier sa configuration.
 - Le fichier .env reste ignoré par Git. Ne publie jamais un token ni une URL de webhook dans un fichier FBP, un dépôt ou un journal partagé.
 
-Discord.js applique déjà la gestion des limites de requêtes REST et des attentes de réessai ; FBP traduit désormais les erreurs de limite en messages compréhensibles. Les configurations FBP de commandes et d'événements restent communes à l'instance du bot ; une configuration personnalisée et persistante par serveur n'est pas encore exposée par le langage.
+Discord.js applique déjà la gestion des limites de requêtes REST et des attentes de réessai ; FBP traduit désormais les erreurs de limite en messages compréhensibles. Les configurations de serveur sont déclarées dans le fichier FBP et restent séparées par identifiant de serveur pendant l'exécution. Elles ne sont pas modifiables à chaud depuis Discord et ne sont pas sauvegardées dans un fichier de données.
+
+## Configuration par serveur (v1.3.4)
+
+La fonction `configurationServeur` permet de définir des valeurs différentes selon l'identifiant Discord du serveur. Les clés utilisent des lettres minuscules, chiffres, tirets ou underscores.
+
+```fbp
+configurationServeur("12345678901234567", "accueil", "Bienvenue sur le serveur principal, {{membre}} !")
+configurationServeur("12345678901234568", "accueil", "Bienvenue sur la communauté secondaire, {{membre}} !")
+
+connexion()
+commande("bienvenue", "{{config:accueil}}")
+```
+
+Le placeholder `{{config:accueil}}` est remplacé par la valeur associée au serveur où la commande est utilisée. Ces placeholders fonctionnent dans les réponses texte, les titres et descriptions d'embeds, les champs d'embeds, ainsi que les messages des événements Discord. Une clé non configurée reste affichée telle quelle pour faciliter le diagnostic. Les valeurs sont chargées depuis le programme FBP à chaque exécution : ne place jamais de token, mot de passe ou autre secret dans une configuration.
 
 ## Fonctionnalités
 
