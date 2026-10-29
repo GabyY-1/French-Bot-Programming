@@ -243,9 +243,9 @@ function doctor(): void {
 }
 
 function printExample(createFile: boolean): void {
-  const example = 'nom = "Mon projet"\\n\\nlance() {\\n  affiche("FBP fonctionne !")\\n  affiche("Projet :", nom)\\n}\\n\\nlance()\\n';
+  const example = 'nom = "Mon projet"\n\nlance() {\n  affiche("FBP fonctionne !")\n  affiche("Projet :", nom)\n}\n\nlance()\n';
   if (!createFile) {
-    console.log("Exemple FBP minimal :\\n");
+    console.log("Exemple FBP minimal :\n");
     console.log(example);
     console.log("Pour le sauvegarder : fbp example --create");
     return;
