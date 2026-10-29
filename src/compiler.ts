@@ -526,15 +526,15 @@ export class FbpCompiler {
       ];
       for (const [discordEvent, fbpEvent] of serverEvents) {
         client.on(discordEvent as never, ((...args: unknown[]) => {
-          const first = args[0] as { name?: string; id?: string; guild?: { name: string }; user?: { username: string; id: string }; reason?: string };
-          const second = args[1] as { name?: string; id?: string; guild?: { name: string }; user?: { username: string; id: string }; reason?: string } | undefined;
+          const first = args[0] as { name?: string; id?: string; guild?: { name: string; id?: string }; user?: { username: string; id: string }; reason?: string };
+          const second = args[1] as { name?: string; id?: string; guild?: { name: string; id?: string }; user?: { username: string; id: string }; reason?: string } | undefined;
           const target = second ?? first;
           renderDiscordEvent("serveur:" + fbpEvent, {
             evenement: fbpEvent,
             nom: target.name ?? first.name ?? "inconnu",
             id: target.id ?? first.id ?? "inconnu",
             serveur: target.guild?.name ?? first.guild?.name ?? "Serveur",
-            serveur_id: (target.guild as { id?: string } | undefined)?.id ?? (first.guild as { id?: string } | undefined)?.id ?? "",
+            serveur_id: target.guild?.id ?? first.guild?.id ?? "",
             pseudo: target.user?.username ?? first.user?.username ?? "inconnu",
             membre: target.user?.username ?? first.user?.username ?? "inconnu",
             raison: target.reason ?? first.reason ?? "Aucun motif"
