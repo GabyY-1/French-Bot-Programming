@@ -59,7 +59,7 @@ Utilisation :
   fbp -init                Prépare un projet FBP et le support VS Code
   fbp init                 Alias de -init
   fbp run <commande>       Exécute une commande de commandes.fbp
-  fbp run-file <fichier>   Exécute directement un fichier .fbp\n\nDans VS Code, FBP ${VERSION} propose l’autocomplétion et signale les erreurs de syntaxe.`);
+  fbp run-file <fichier>   Exécute directement un fichier .fbp`);
 }
 
 function ping(): void {
