@@ -168,7 +168,11 @@ async function main() {
   }
 }
 
-main().catch(error => {
-  console.error("Impossible de lancer la validation stable :", error.message);
-  process.exitCode = 1;
-});
+if (require.main === module) {
+  main().catch(error => {
+    console.error("Impossible de lancer la validation stable :", error.message);
+    process.exitCode = 1;
+  });
+}
+
+module.exports = { sections };
