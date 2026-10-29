@@ -83,6 +83,39 @@ evenementPrive("DM de {{pseudo}} : {{message}}")
 
 Les connexions vocales nécessitent `@discordjs/voice`. Les commandes contextuelles sont enregistrées au démarrage comme les commandes slash. Les réponses contextuelles sont privées et affichent l'utilisateur ou le message sélectionné.
 
+## Commandes du terminal FBP (v1.3.5)
+
+Depuis le terminal, les commandes suivantes permettent de gérer et vérifier un projet sans ouvrir le code du CLI :
+
+| Commande | Utilité |
+| --- | --- |
+| `fbp help` | Affiche toutes les commandes disponibles |
+| `fbp version` | Affiche la version locale et tente de comparer avec npm |
+| `fbp info` | Affiche les informations du moteur |
+| `fbp ping` | Vérifie que le CLI démarre |
+| `fbp init` ou `fbp -init` | Initialise un projet sans écraser les fichiers déjà présents |
+| `fbp run lancer` | Exécute la commande `lancer` déclarée dans `commandes.fbp` |
+| `fbp run-file scripts/main.fbp` | Exécute directement un fichier FBP |
+| `fbp list` ou `fbp commands` | Liste les commandes déclarées dans `commandes.fbp` |
+| `fbp check` ou `fbp validate` | Vérifie le JSON et l'existence des fichiers ciblés, sans exécuter le bot |
+| `fbp doctor` | Vérifie la version de Node.js et les éléments principaux du projet |
+| `fbp where` | Affiche les chemins du dossier courant, du CLI et de la configuration |
+| `fbp example` | Affiche un exemple de programme FBP |
+| `fbp example --create` | Crée `exemple.fbp` dans le dossier courant sans écraser un fichier existant |
+
+Exemple de démarrage rapide :
+
+```bash
+fbp init
+fbp doctor
+fbp example
+fbp list
+fbp check
+fbp run lancer
+```
+
+`fbp check` vérifie la configuration et les chemins, mais ne garantit pas qu'un bot pourra se connecter à Discord. Pour vérifier le fonctionnement réel d'un bot, utilise aussi `npm run testStable` dans le projet de développement et teste sur un serveur Discord de test.
+
 ## Prérequis
 
 - Node.js 20 ou plus récent
