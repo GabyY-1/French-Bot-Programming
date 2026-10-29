@@ -6,7 +6,7 @@ Le langage permet de déclarer des commandes slash, des réponses simples ou int
 
 ## Version actuelle
 
-La version actuelle est FBP 1.3.4. La version 1.3.1 ajoute les commandes de gestion des messages, salons, catégories et fils de discussion. La version 1.3.2 étend le langage avec les événements Discord : messages, réactions, interactions, salons vocaux et événements du serveur. La version 1.3.3 ajoute les connexions vocales, les invitations, les sondages, les événements planifiés, les webhooks, les messages privés et les commandes contextuelles utilisateur/message. La version 1.3.4 renforce les vérifications de permissions pour les actions sensibles, améliore les erreurs Discord en français, gère les erreurs de connexion et évite d'afficher l'URL secrète d'un webhook lors de sa création. La disponibilité sur npm dépend de la publication de la version.
+La version en développement est FBP 1.3.5. La version disponible sur npm dépend de la publication effective. La version 1.3.1 ajoute les commandes de gestion des messages, salons, catégories et fils de discussion. La version 1.3.2 étend le langage avec les événements Discord : messages, réactions, interactions, salons vocaux et événements du serveur. La version 1.3.3 ajoute les connexions vocales, les invitations, les sondages, les événements planifiés, les webhooks, les messages privés et les commandes contextuelles utilisateur/message. La version 1.3.4 renforce les vérifications de permissions pour les actions sensibles, améliore les erreurs Discord en français, gère les erreurs de connexion et évite d'afficher l'URL secrète d'un webhook lors de sa création. La disponibilité sur npm dépend de la publication de la version.
 
 
 
@@ -104,7 +104,7 @@ Puis, dans le `package.json` de ton projet :
     "start": "fbp run lancer"
   },
   "dependencies": {
-    "fbp-language": "^1.3.3"
+    "fbp-language": "^1.3.5"
   }
 }
 ```
@@ -147,6 +147,18 @@ fbp -init
 La commande crée `commandes.fbp` et `scripts/main.fbp` sans écraser les fichiers existants. Elle installe également le support FBP fourni avec le package dans le dossier des extensions VS Code de l’utilisateur. Si le dossier de cette version de l’extension existe déjà, il est conservé et n’est pas remplacé. Si tu utilises une instance distante ou un environnement sans dossier d’extensions accessible, l’installation peut nécessiter une configuration manuelle. Recharge ensuite VS Code. Pour l’icône FBP, sélectionne `FBP File Icons` dans **Préférences : Thème d’icônes de fichiers**.
 
 Le support VS Code contient la reconnaissance des fichiers `.fbp`, la coloration syntaxique et le thème d’icônes. Il est livré dans le même dépôt et le même package npm ; aucune extension séparée à rechercher n’est nécessaire.
+
+## Validation de la version stable
+
+Avant une publication, connecte ton bot FBP à un serveur Discord de test puis lance :
+
+```bash
+npm run testStable
+```
+
+Le questionnaire propose **42 contrôles manuels** couvrant le démarrage, les commandes slash, les options, les embeds, les permissions, les salons, les événements, les intents et la fiabilité. Réponds `Y` si le test réussit ou `N` s'il échoue. La progression s'affiche à chaque étape ; à la fin, le bilan liste les échecs et affiche `TESTS GOOD PASS` uniquement si tous les contrôles sont validés. Un seul échec bloque le statut final.
+
+Ce contrôle nécessite un vrai bot et un serveur de test, mais ne se connecte pas lui-même à Discord et ne modifie pas ton serveur automatiquement. Utilise un salon dédié, des rôles de test et uniquement des objets temporaires pour les opérations de modération ou de suppression. Lance aussi `npm test` : les tests automatisés et la validation manuelle sont complémentaires.
 
 ## Commandes CLI
 
