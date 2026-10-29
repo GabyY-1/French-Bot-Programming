@@ -716,11 +716,13 @@ export class FbpCompiler {
 
       client.on("interactionCreate", async interaction => {
         if (interaction.isUserContextMenuCommand()) {
-          await interaction.reply({ content: "Utilisateur sélectionné : " + interaction.targetUser.username + " (" + interaction.targetUser.id + ")", ephemeral: true });
+          await interaction.reply({ content: "Utilisateur sélectionné : " + interaction.targetUser.username + " (" + interaction.targetUser.id + ")", ephemeral: true })
+            .catch(error => this.output("Échec de la commande contextuelle : " + formatDiscordError(error)));
           return;
         }
         if (interaction.isMessageContextMenuCommand()) {
-          await interaction.reply({ content: "Message sélectionné : " + interaction.targetMessage.content.slice(0, 1800) + "\nID : " + interaction.targetMessage.id, ephemeral: true });
+          await interaction.reply({ content: "Message sélectionné : " + interaction.targetMessage.content.slice(0, 1800) + "\nID : " + interaction.targetMessage.id, ephemeral: true })
+            .catch(error => this.output("Échec de la commande contextuelle : " + formatDiscordError(error)));
           return;
         }
         if (interaction.isAutocomplete()) {
@@ -733,7 +735,7 @@ export class FbpCompiler {
             .filter(choice => choice.name.toLocaleLowerCase().includes(query) || String(choice.value).toLocaleLowerCase().includes(query))
             .slice(0, 25)
             .map(choice => ({ name: choice.name, value: choice.value }));
-          await interaction.respond(suggestions).catch(() => undefined);
+          await interaction.respond(suggestions).catch(error => this.output("Échec de l'autocomplétion Discord : " + formatDiscordError(error)));
           return;
         }
         if (!interaction.isChatInputCommand()) return;
@@ -747,7 +749,8 @@ export class FbpCompiler {
             ? rootResponse.groups?.find(group => group.name === groupName)?.subcommands.find(subcommand => subcommand.name === subcommandName)
             : rootResponse.subcommands?.find(subcommand => subcommand.name === subcommandName);
           if (!nested) {
-            await interaction.reply({ content: "Cette sous-commande FBP n'est pas configurée.", ephemeral: true });
+            await interaction.reply({ content: "Cette sous-commande FBP n'est pas configurée.", ephemeral: true })
+              .catch(error => this.output("Échec de la réponse Discord : " + formatDiscordError(error)));
             return;
           }
           response = nested.response;
