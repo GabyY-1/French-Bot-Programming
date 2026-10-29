@@ -23,6 +23,10 @@ test("le CLI affiche son aide", () => {
   assert.equal(result.status, 0);
   assert.match(result.stdout, /FBP — French Bot Programming/);
   assert.match(result.stdout, /run-file/);
+  assert.match(result.stdout, /fbp doctor/);
+  assert.match(result.stdout, /fbp example --create/);
+  assert.match(result.stdout, /fbp check/);
+  assert.match(result.stdout, /fbp list/);
 });
 
 test("la commande ping répond", () => {
