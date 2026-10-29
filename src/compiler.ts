@@ -1667,6 +1667,11 @@ export class FbpCompiler {
       const channelId = values[0];
       void this.discordClient.channels.fetch(channelId).then(async channel => {
         if (!channel || !channel.isVoiceBased() || !("guild" in channel) || !channel.guild) throw new Error("Le salon indiqué n'est pas un salon vocal valide.");
+        const botMember = channel.guild.members.me;
+        const voiceChannel = channel as import("discord.js").GuildChannel;
+        if (!botMember || !voiceChannel.permissionsFor(botMember).has(PermissionFlagsBits.Connect)) {
+          throw new Error("Le bot doit disposer de la permission Se connecter dans ce salon vocal.");
+        }
         const voice = await import("@discordjs/voice");
         const connection = voice.joinVoiceChannel({ channelId: channel.id, guildId: channel.guild.id, adapterCreator: channel.guild.voiceAdapterCreator, selfDeaf: true });
         await voice.entersState(connection, voice.VoiceConnectionStatus.Ready, 15_000);
