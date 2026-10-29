@@ -221,6 +221,7 @@ export class FbpCompiler {
         this.useVoiceStatesIntent = true;
       } else if (statement.kind === "call" && statement.name === "evenementPrive") {
         this.useDirectMessagesIntent = true;
+        this.useMessageContentIntent = true;
       } else if (statement.kind === "call" && ["vocalRejoindre", "vocalQuitter", "evenementVocal"].includes(statement.name)) {
         this.useVoiceStatesIntent = true;
       } else if (statement.kind === "call" && statement.name === "evenementServeur") {
@@ -806,6 +807,10 @@ export class FbpCompiler {
             }
             const action = response.contentAction;
             const guild = interaction.guild;
+            const selectedChannel = action === "send-thread" || action === "close-thread"
+              ? interaction.options.getChannel("fil", true)
+              : interaction.options.getChannel("salon", !["send"].includes(action));
+            const permissionTarget = selectedChannel ?? interaction.channel;
             const actor = await guild.members.fetch(interaction.user.id).catch(() => null);
             const requiredPermissions = action === "read"
               ? [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.ReadMessageHistory]
@@ -824,13 +829,21 @@ export class FbpCompiler {
                           : ["pin", "unpin", "delete", "edit"].includes(action)
                             ? [PermissionFlagsBits.ManageMessages]
                             : [PermissionFlagsBits.SendMessages];
-            if (!actor || !requiredPermissions.every(permission => actor.permissions.has(permission))) {
-              await interaction.reply({ content: "Tu n'as pas la permission nécessaire pour cette action.", ephemeral: true });
+            const actorPermissions = actor && permissionTarget && "permissionsFor" in permissionTarget &&
+              typeof permissionTarget.permissionsFor === "function"
+              ? permissionTarget.permissionsFor(actor)
+              : actor?.permissions;
+            if (!actor || !actorPermissions || !requiredPermissions.every(permission => actorPermissions.has(permission))) {
+              await interaction.reply({ content: "Tu n'as pas la permission nécessaire pour cette action dans ce salon.", ephemeral: true });
               return;
             }
             const botMember = guild.members.me;
-            if (!botMember || !requiredPermissions.every(permission => botMember.permissions.has(permission))) {
-              await interaction.reply({ content: "Le bot ne possède pas toutes les permissions nécessaires.", ephemeral: true });
+            const botPermissions = botMember && permissionTarget && "permissionsFor" in permissionTarget &&
+              typeof permissionTarget.permissionsFor === "function"
+              ? permissionTarget.permissionsFor(botMember)
+              : botMember?.permissions;
+            if (!botMember || !botPermissions || !requiredPermissions.every(permission => botPermissions.has(permission))) {
+              await interaction.reply({ content: "Le bot ne possède pas toutes les permissions nécessaires dans ce salon.", ephemeral: true });
               return;
             }
             if (action === "create-category") {
@@ -938,7 +951,6 @@ export class FbpCompiler {
               await interaction.reply({ content: "Permissions du salon mises à jour.", ephemeral: true });
               return;
             }
-            const selectedChannel = interaction.options.getChannel("salon", !["send"].includes(action));
             if (action === "delete-channel" || action === "rename-channel" || action === "topic-channel") {
               if (!selectedChannel || !("guild" in selectedChannel) || selectedChannel.guild.id !== guild.id) {
                 await interaction.reply({ content: "Salon invalide.", ephemeral: true });
