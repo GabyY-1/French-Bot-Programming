@@ -839,7 +839,10 @@ export class FbpCompiler {
             const selectedChannel = action === "send-thread" || action === "close-thread"
               ? interaction.options.getChannel("fil", true)
               : interaction.options.getChannel("salon", !["send"].includes(action));
-            const permissionTarget = selectedChannel ?? interaction.channel;
+            const permissionTarget = selectedChannel && "isThread" in selectedChannel &&
+              typeof selectedChannel.isThread === "function" && selectedChannel.isThread() && "parent" in selectedChannel
+              ? selectedChannel.parent ?? selectedChannel
+              : selectedChannel ?? interaction.channel;
             const actor = await guild.members.fetch(interaction.user.id).catch(() => null);
             const requiredPermissions = action === "read"
               ? [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.ReadMessageHistory]
